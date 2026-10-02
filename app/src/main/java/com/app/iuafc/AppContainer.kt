@@ -5,8 +5,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.app.iuafc.data.remote.SupabaseProvider
 import com.app.iuafc.data.repository.DemoSessionRepository
+import com.app.iuafc.data.repository.MemberRepository
+import com.app.iuafc.data.repository.MockMemberRepository
+import com.app.iuafc.data.repository.MockUserRepository
 import com.app.iuafc.data.repository.SessionRepository
 import com.app.iuafc.data.repository.SupabaseSessionRepository
+import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
@@ -21,6 +25,10 @@ class AppContainer(appScope: CoroutineScope) {
     val sessionRepository: SessionRepository =
         if (SupabaseProvider.isConfigured) SupabaseSessionRepository(SupabaseProvider.client, appScope)
         else DemoSessionRepository()
+
+    // Mock until the Supabase tables are ready (#1). Swap for the Supabase versions then.
+    val memberRepository: MemberRepository = MockMemberRepository()
+    val userRepository: UserRepository = MockUserRepository()
 }
 
 class IuafcApplication : Application() {
