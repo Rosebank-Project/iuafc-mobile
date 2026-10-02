@@ -21,7 +21,7 @@ import com.app.iuafc.data.model.UserProfile
  *
  * Based on `lib/seed-data.ts` of the website (same IDs and names for the first records),
  * extended to at least 10 records per table as the brief requires, with South African
- * phone numbers and addresses. Rolph can reuse it for `database/seed.sql`.
+ * phone numbers and addresses. Rolph can reuse it for the seed migration.
  *
  * Use it in a mock repository, e.g. `class MockEventRepository : EventRepository`, and swap
  * it for the Supabase repository later without touching the screen.

@@ -60,8 +60,8 @@ Everyone codes. Each member works on a branch (`feature/<name>-<feature>`) and o
 - [ ] Review and merge PRs
 
 ### Rolph – Business Analyst / Testing
-- [ ] **R1. Database** *(Week 6 – blocks the screens)*: SQL script with all the tables, primary/foreign keys, correct data types, consistent `snake_case` naming, Row Level Security policies per role. Add the script to the repo (`database/schema.sql`)
-- [ ] **R2. Seed data**: at least **10 records per table** (`database/seed.sql`), based on `lib/seed-data.ts`
+- [ ] **R1. Database** *(Week 6 – blocks the screens)*: SQL script with all the tables, primary/foreign keys, correct data types, consistent `snake_case` naming, Row Level Security policies per role. Add it as a migration: `supabase/migrations/<timestamp>_schema.sql` (see `docs/database-migrations.md`)
+- [ ] **R2. Seed data**: at least **10 records per table** (`supabase/migrations/<timestamp>_seed.sql`), based on `lib/seed-data.ts`
 - [ ] **R3. ERD**: diagram of the database for the report
 - [ ] **R4. Screens**: Events (list, details, register/unregister), Attendance (capture – Admin/Pastor/Ministry Leader), My Attendance (Church Member)
 - [ ] **R5. Automated tests**: unit tests for the validation logic and ViewModels, plus at least 2 instrumented UI tests (login, one form). They must pass in GitHub Actions
