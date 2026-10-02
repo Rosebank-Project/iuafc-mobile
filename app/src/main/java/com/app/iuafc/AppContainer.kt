@@ -10,6 +10,7 @@ import com.app.iuafc.data.repository.MockMemberRepository
 import com.app.iuafc.data.repository.MockUserRepository
 import com.app.iuafc.data.repository.SessionRepository
 import com.app.iuafc.data.repository.SupabaseSessionRepository
+import com.app.iuafc.data.repository.SupabaseUserRepository
 import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -26,9 +27,11 @@ class AppContainer(appScope: CoroutineScope) {
         if (SupabaseProvider.isConfigured) SupabaseSessionRepository(SupabaseProvider.client, appScope)
         else DemoSessionRepository()
 
-    // Mock until the Supabase tables are ready (#1). Swap for the Supabase versions then.
+    // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
     val memberRepository: MemberRepository = MockMemberRepository()
-    val userRepository: UserRepository = MockUserRepository()
+    val userRepository: UserRepository =
+        if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
+        else MockUserRepository()
 }
 
 class IuafcApplication : Application() {
