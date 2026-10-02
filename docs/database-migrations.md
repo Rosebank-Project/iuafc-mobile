@@ -40,7 +40,9 @@ Supabase keeps the list of applied migrations in `supabase_migrations.schema_mig
   migrations – run them by hand in the Supabase SQL Editor.
 - Enable **Row Level Security** on every new table and add policies per role.
 
-## Required secrets (already set)
+## Required secret
 
-`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_ID` in
-GitHub → Settings → Secrets and variables → Actions.
+`SUPABASE_DB_URL` in GitHub → Settings → Secrets and variables → Actions: the **Session pooler**
+connection string from Supabase → **Connect** (with the database password filled in). The
+workflow connects straight to Postgres with it, so no Supabase access token is needed.
+Never commit it – it contains the database password.
