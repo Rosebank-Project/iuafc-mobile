@@ -37,6 +37,12 @@ interface SessionRepository {
 
     suspend fun signIn(email: String, password: String): AuthResult
     suspend fun signUp(fullName: String, email: String, password: String): SignUpResult
+
+    /**
+     * Google single sign-on. [idToken] comes from Credential Manager; [rawNonce] is the
+     * nonce whose SHA-256 hash was sent to Google, so Supabase can check the token.
+     */
+    suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthResult
     suspend fun sendPasswordReset(email: String): AuthResult
     suspend fun signOut()
 

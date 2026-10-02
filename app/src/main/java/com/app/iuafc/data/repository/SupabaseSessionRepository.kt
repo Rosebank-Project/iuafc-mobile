@@ -6,7 +6,9 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.exception.AuthErrorCode
 import io.github.jan.supabase.auth.exception.AuthRestException
+import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.exceptions.HttpRequestException
@@ -67,6 +69,16 @@ class SupabaseSessionRepository(
         }
         // With email confirmation enabled in Supabase there is no session yet.
         if (supabase.auth.currentSessionOrNull() != null) SignUpResult.SignedIn else SignUpResult.ConfirmEmail
+    }
+
+    override suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthResult = attempt(AuthResult::Error) {
+        // Supabase checks the token with Google and creates the user on the first sign-in.
+        supabase.auth.signInWith(IDToken) {
+            this.idToken = idToken
+            provider = Google
+            nonce = rawNonce
+        }
+        AuthResult.Success
     }
 
     override suspend fun sendPasswordReset(email: String): AuthResult = attempt(AuthResult::Error) {

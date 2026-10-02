@@ -26,6 +26,7 @@ class DemoSessionRepository : SessionRepository {
 
     override suspend fun signIn(email: String, password: String) = AuthResult.Error(NOT_CONFIGURED)
     override suspend fun signUp(fullName: String, email: String, password: String) = SignUpResult.Error(NOT_CONFIGURED)
+    override suspend fun signInWithGoogle(idToken: String, rawNonce: String) = AuthResult.Error(NOT_CONFIGURED)
     override suspend fun sendPasswordReset(email: String) = AuthResult.Error(NOT_CONFIGURED)
 
     override suspend fun signOut() {
