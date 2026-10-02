@@ -1,57 +1,77 @@
 package com.app.iuafc.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Navy,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primaryContainer = LightSecondary,
+    onPrimaryContainer = Navy,
+    secondary = Gold,
+    onSecondary = NavyDeep,
+    secondaryContainer = Color(0xFFFBEFD2),
+    onSecondaryContainer = NavyDeep,
+    tertiary = Gold,
+    onTertiary = NavyDeep,
+    background = LightBackground,
+    onBackground = NavyDeep,
+    surface = LightSurface,
+    onSurface = NavyDeep,
+    surfaceVariant = LightSecondary,
+    onSurfaceVariant = LightMutedText,
+    surfaceContainer = LightSurface,
+    surfaceContainerLow = LightSurface,
+    surfaceContainerHigh = LightSecondary,
+    outline = LightBorder,
+    outlineVariant = LightBorder,
+    error = LightError,
+    onError = Color.White,
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = Gold,
+    onPrimary = DarkBackground,
+    primaryContainer = DarkSecondary,
+    onPrimaryContainer = Color.White,
+    secondary = Gold,
+    onSecondary = DarkBackground,
+    secondaryContainer = DarkSecondary,
+    onSecondaryContainer = Gold,
+    tertiary = Gold,
+    onTertiary = DarkBackground,
+    background = DarkBackground,
+    onBackground = Color.White,
+    surface = DarkSurface,
+    onSurface = Color.White,
+    surfaceVariant = DarkSecondary,
+    onSurfaceVariant = DarkMutedText,
+    surfaceContainer = DarkSurface,
+    surfaceContainerLow = DarkSurface,
+    surfaceContainerHigh = DarkSecondary,
+    outline = DarkBorder,
+    outlineVariant = DarkBorder,
+    error = DarkError,
+    onError = Color.White,
+)
+
+/**
+ * App theme. Uses the church brand colours (navy and gold) instead of the
+ * phone's dynamic colours, so the app always matches the website.
+ *
+ * [darkTheme] will be controlled by the Settings screen (issue #10).
+ */
 @Composable
 fun IUAFCTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = Typography,
         content = content
     )
