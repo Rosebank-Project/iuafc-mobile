@@ -55,6 +55,25 @@ class LoginViewModel(private val session: SessionRepository) : ViewModel() {
         }
     }
 
+    /** Call before showing the Google account picker. */
+    fun onGoogleSignInStarted() =
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+    /** Call with the result of the Google account picker. */
+    fun onGoogleCredential(result: GoogleCredentialResult) {
+        when (result) {
+            GoogleCredentialResult.Cancelled -> _uiState.update { it.copy(isLoading = false) }
+            is GoogleCredentialResult.Error ->
+                _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+            is GoogleCredentialResult.Success -> viewModelScope.launch {
+                val signIn = session.signInWithGoogle(result.idToken, result.rawNonce)
+                _uiState.update {
+                    it.copy(isLoading = false, errorMessage = (signIn as? AuthResult.Error)?.message)
+                }
+            }
+        }
+    }
+
     companion object {
         val Factory = viewModelFactory {
             initializer { LoginViewModel(appContainer.sessionRepository) }

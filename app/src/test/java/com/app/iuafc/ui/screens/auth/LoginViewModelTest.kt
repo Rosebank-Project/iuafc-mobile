@@ -69,4 +69,44 @@ class LoginViewModelTest {
 
         assertNull(viewModel.uiState.value.emailError)
     }
+
+    @Test
+    fun googleSignIn_success_signsInWithToken() {
+        viewModel.onGoogleSignInStarted()
+        viewModel.onGoogleCredential(GoogleCredentialResult.Success(idToken = "google-token", rawNonce = "nonce"))
+
+        assertEquals("google-token", session.lastGoogleToken)
+        assertTrue(session.state.value is SessionState.SignedIn)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun googleSignIn_cancelled_stopsLoadingWithoutError() {
+        viewModel.onGoogleSignInStarted()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        viewModel.onGoogleCredential(GoogleCredentialResult.Cancelled)
+
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertNull(session.lastGoogleToken)
+    }
+
+    @Test
+    fun googleSignIn_pickerError_isShown() {
+        viewModel.onGoogleSignInStarted()
+        viewModel.onGoogleCredential(GoogleCredentialResult.Error("No Google account found."))
+
+        assertEquals("No Google account found.", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun googleSignIn_serverError_isShown() {
+        session.googleResult = AuthResult.Error("Something went wrong. Please try again.")
+        viewModel.onGoogleCredential(GoogleCredentialResult.Success("google-token", "nonce"))
+
+        assertEquals("Something went wrong. Please try again.", viewModel.uiState.value.errorMessage)
+        assertTrue(session.state.value is SessionState.SignedOut)
+    }
 }
