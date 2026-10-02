@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.ui.components.EmptyState
 import com.app.iuafc.ui.screens.activities.ActivitiesScreen
@@ -31,6 +32,8 @@ import com.app.iuafc.ui.screens.dashboard.DashboardScreen
 import com.app.iuafc.ui.screens.donations.DonationsScreen
 import com.app.iuafc.ui.screens.events.EventsScreen
 import com.app.iuafc.ui.screens.help.HelpScreen
+import com.app.iuafc.ui.screens.members.MemberDetailScreen
+import com.app.iuafc.ui.screens.members.MemberFormScreen
 import com.app.iuafc.ui.screens.members.MembersScreen
 import com.app.iuafc.ui.screens.menu.MenuScreen
 import com.app.iuafc.ui.screens.ministries.MinistriesScreen
@@ -79,6 +82,7 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
                 .consumeWindowInsets(innerPadding),
         ) {
             val back: () -> Unit = { navController.popBackStack() }
+            val isAdmin = user.role == Role.ADMINISTRATOR
 
             // Bottom bar tabs
             composable<DashboardRoute> {
@@ -97,7 +101,22 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
             // Screens opened from the Menu. Each one checks the user's role.
             roleScreen(user, AppDestination.NOTIFICATIONS, NotificationsRoute::class) { NotificationsScreen(back) }
             roleScreen(user, AppDestination.USERS, UsersRoute::class) { UsersScreen(back) }
-            roleScreen(user, AppDestination.MEMBERS, MembersRoute::class) { MembersScreen(back) }
+            roleScreen(user, AppDestination.MEMBERS, MembersRoute::class) {
+                MembersScreen(
+                    onBack = back,
+                    canManage = isAdmin,
+                    onOpenMember = { navController.navigate(MemberDetailRoute(it)) },
+                    onAddMember = { navController.navigate(MemberFormRoute()) },
+                )
+            }
+            roleScreen(user, AppDestination.MEMBERS, MemberDetailRoute::class) {
+                MemberDetailScreen(
+                    onBack = back,
+                    canManage = isAdmin,
+                    onEdit = { navController.navigate(MemberFormRoute(it)) },
+                )
+            }
+            roleScreen(user, AppDestination.MEMBERS, MemberFormRoute::class, adminOnly = true) { MemberFormScreen(back) }
             roleScreen(user, AppDestination.MINISTRIES, MinistriesRoute::class) { MinistriesScreen(back) }
             roleScreen(user, AppDestination.ACTIVITIES, ActivitiesRoute::class) { ActivitiesScreen(back) }
             roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) { AttendanceScreen(back) }
@@ -110,15 +129,20 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
     }
 }
 
-/** Registers a screen that only some roles can open; others see "Access denied". */
+/**
+ * Registers a screen that only some roles can open; others see "Access denied".
+ * [adminOnly] restricts it further to Administrators (e.g. forms that change data).
+ */
 private fun <T : Any> NavGraphBuilder.roleScreen(
     user: UserProfile,
     destination: AppDestination,
     route: KClass<T>,
+    adminOnly: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     composable(route) {
-        if (destination.isAllowedFor(user.role)) {
+        val allowed = destination.isAllowedFor(user.role) && (!adminOnly || user.role == Role.ADMINISTRATOR)
+        if (allowed) {
             content()
         } else {
             EmptyState(

@@ -30,6 +30,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object NotificationsRoute
 @Serializable data object UsersRoute
 @Serializable data object MembersRoute
+@Serializable data class MemberDetailRoute(val memberId: String)
+/** [memberId] null = add a new member. */
+@Serializable data class MemberFormRoute(val memberId: String? = null)
 @Serializable data object MinistriesRoute
 @Serializable data object ActivitiesRoute
 @Serializable data object EventsRoute
