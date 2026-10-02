@@ -1,5 +1,6 @@
 -- =============================================================================
--- Make the first Administrator (run once, after profiles.sql)
+-- Make the first Administrator (run once, by hand, in the Supabase SQL Editor)
+-- Not a migration: it contains a personal email and only runs once.
 --
 -- Every new account starts as "Church Member", and only an Administrator can
 -- change roles, so the first Administrator has to be set here.

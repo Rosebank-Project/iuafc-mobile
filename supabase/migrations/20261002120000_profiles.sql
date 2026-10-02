@@ -5,8 +5,8 @@
 -- creates the matching profile with the "Church Member" role. Only
 -- Administrators can change roles, through the set_user_role() function.
 --
--- Run once in Supabase: SQL Editor -> New query -> paste -> Run.
--- The rest of the schema (members, ministries, events...) is in schema.sql (#1).
+-- Applied automatically by GitHub Actions (.github/workflows/database.yml) when
+-- merged into main. Safe to run more than once.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -18,8 +18,8 @@ create table if not exists public.profiles (
     email       text        not null,
     role        text        not null default 'Church Member'
                 check (role in ('Administrator', 'Pastor', 'Finance Officer', 'Ministry Leader', 'Church Member')),
-    -- Links to members(id) / ministries(id). The foreign keys are added in
-    -- schema.sql (#1) once those tables exist.
+    -- Links to members(id) / ministries(id). The foreign keys are added in a
+    -- later migration (#1) once those tables exist.
     member_id   uuid,
     ministry_id uuid,
     created_at  timestamptz not null default now(),
