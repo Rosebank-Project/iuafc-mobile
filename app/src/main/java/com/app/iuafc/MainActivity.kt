@@ -4,44 +4,36 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.iuafc.data.repository.SessionRepository
+import com.app.iuafc.navigation.MainScaffold
+import com.app.iuafc.ui.screens.auth.DemoLoginScreen
 import com.app.iuafc.ui.theme.IUAFCTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val session = (application as IuafcApplication).container.sessionRepository
         setContent {
             IUAFCTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                IuafcApp(session)
             }
         }
     }
 }
 
+/** Shows the login screen when signed out, and the main app when signed in. */
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun IuafcApp(session: SessionRepository) {
+    val user by session.currentUser.collectAsStateWithLifecycle()
+    val signedInUser = user
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    IUAFCTheme {
-        Greeting("Android")
+    if (signedInUser == null) {
+        DemoLoginScreen(onSignIn = session::signInAsDemo)
+    } else {
+        MainScaffold(user = signedInUser, onSignOut = session::signOut)
     }
 }
