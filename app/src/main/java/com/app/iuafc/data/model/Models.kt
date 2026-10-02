@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 // Data models matching the website (`lib/types.ts`).
 // @SerialName uses the snake_case column names proposed for the database (issue #1).
-// If a column name changes in `database/schema.sql`, update it here too.
+// If a column name changes in the schema migration, update it here too.
 // Dates are ISO strings ("2026-10-02"), times are "HH:mm".
 
 /** A logged-in user. Linked to Supabase Auth; the password is never stored here. */

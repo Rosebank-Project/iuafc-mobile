@@ -97,7 +97,7 @@ class SupabaseSessionRepository(
     }
 
     /**
-     * Reads the user's role from the `profiles` table (database/profiles.sql). If it cannot
+     * Reads the user's role from the `profiles` table (supabase/migrations/*_profiles.sql). If it cannot
      * be read (e.g. offline), the user is treated as a Church Member.
      */
     private suspend fun loadProfile(user: UserInfo): UserProfile {
