@@ -28,7 +28,19 @@ the client is in `data/remote/SupabaseProvider.kt`.
 > The anon key is safe to use in the app because the database is protected by Row Level
 > Security (issue #1). **Never** put the `service_role` key in the app or in the repository.
 
-## 3. GitHub Actions
+## 3. Create the profiles table (once – Miguel)
+
+`profiles` stores the role of every account. A trigger creates a profile (role **Church Member**)
+when someone registers or signs in with Google, and only Administrators can change roles.
+
+1. Supabase → **SQL Editor** → **New query**, paste `database/profiles.sql` and click **Run**.
+2. Open `database/first-admin.sql`, replace `YOUR_EMAIL@gmail.com` with the email you sign in
+   with, paste it in a new query and **Run**. The result should show your account as Administrator.
+3. Sign out and sign in again in the app – the menu now shows the Administrator screens.
+
+After that, change other people's roles in the app: **Menu → Users**.
+
+## 4. GitHub Actions
 
 For the CI build, add the same two values as repository secrets:
 **GitHub → Settings → Secrets and variables → Actions → New repository secret**
