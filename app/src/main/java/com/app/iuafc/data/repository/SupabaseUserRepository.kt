@@ -15,7 +15,7 @@ import kotlinx.serialization.json.put
 import java.util.UUID
 
 /**
- * Users and roles from the `profiles` table (supabase/migrations/*_profiles.sql).
+ * Users and roles from the `profiles` table (the profiles migration in supabase/migrations).
  * Row Level Security only lets Administrators and Pastors read every profile, and
  * roles can only be changed through the `set_user_role` database function.
  */
