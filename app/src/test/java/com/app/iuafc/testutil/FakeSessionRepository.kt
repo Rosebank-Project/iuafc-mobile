@@ -18,12 +18,15 @@ class FakeSessionRepository : SessionRepository {
     var signInResult: AuthResult = AuthResult.Success
     var signUpResult: SignUpResult = SignUpResult.SignedIn
     var resetResult: AuthResult = AuthResult.Success
+    var googleResult: AuthResult = AuthResult.Success
 
     var signInCalls = 0
         private set
     var signUpCalls = 0
         private set
     var lastSignUpName: String? = null
+        private set
+    var lastGoogleToken: String? = null
         private set
 
     override suspend fun signIn(email: String, password: String): AuthResult {
@@ -38,6 +41,14 @@ class FakeSessionRepository : SessionRepository {
         signUpCalls++
         lastSignUpName = fullName
         return signUpResult
+    }
+
+    override suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthResult {
+        lastGoogleToken = idToken
+        if (googleResult == AuthResult.Success) {
+            _state.value = SessionState.SignedIn(UserProfile("2", "Google User", "google@iuafc.org", Role.CHURCH_MEMBER))
+        }
+        return googleResult
     }
 
     override suspend fun sendPasswordReset(email: String): AuthResult = resetResult
