@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.app.iuafc.data.model.Role
 
 /**
- * TEMPORARY login used while the real one (issue #20) is being built.
+ * Demo login, used when the Supabase keys are missing from local.properties.
  * Lets the team open the app as any role to test their screens.
  */
 @Composable
@@ -46,7 +46,7 @@ fun DemoLoginScreen(onSignIn: (Role) -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                "Development mode: choose a role to sign in.\nReal login comes in issue #20.",
+                "Demo mode: Supabase keys are not set in local.properties.\nChoose a role to sign in (see docs/supabase-setup.md).",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

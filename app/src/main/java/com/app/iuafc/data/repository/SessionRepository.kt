@@ -2,31 +2,44 @@ package com.app.iuafc.data.repository
 
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+
+sealed interface SessionState {
+    /** Restoring the saved session when the app starts. */
+    data object Loading : SessionState
+    data object SignedOut : SessionState
+    data class SignedIn(val user: UserProfile) : SessionState
+}
+
+sealed interface AuthResult {
+    data object Success : AuthResult
+    data class Error(val message: String) : AuthResult
+}
+
+sealed interface SignUpResult {
+    /** Account created and the user is already signed in. */
+    data object SignedIn : SignUpResult
+    /** Account created; the user must click the link sent by email before signing in. */
+    data object ConfirmEmail : SignUpResult
+    data class Error(val message: String) : SignUpResult
+}
 
 /**
- * Holds the logged-in user.
+ * Login, registration and the current user.
  *
- * TEMPORARY: until Supabase Auth is added (issue #20) you can sign in as a demo
- * user of any role, so every screen can be built and tested with the right menu.
+ * - [SupabaseSessionRepository]: real accounts (Supabase Auth hashes the passwords).
+ * - [DemoSessionRepository]: used when the Supabase keys are missing from local.properties,
+ *   so the app can still be opened as any role.
  */
-class SessionRepository {
+interface SessionRepository {
+    val state: StateFlow<SessionState>
+    val isDemo: Boolean
 
-    private val _currentUser = MutableStateFlow<UserProfile?>(null)
-    val currentUser: StateFlow<UserProfile?> = _currentUser.asStateFlow()
+    suspend fun signIn(email: String, password: String): AuthResult
+    suspend fun signUp(fullName: String, email: String, password: String): SignUpResult
+    suspend fun sendPasswordReset(email: String): AuthResult
+    suspend fun signOut()
 
-    fun signInAsDemo(role: Role) {
-        _currentUser.value = UserProfile(
-            id = "demo-${role.name.lowercase()}",
-            fullName = "Demo ${role.displayName}",
-            email = "${role.name.lowercase()}@iuafc.demo",
-            role = role,
-        )
-    }
-
-    fun signOut() {
-        _currentUser.value = null
-    }
+    /** Only works in demo mode. */
+    fun signInAsDemo(role: Role) = Unit
 }
