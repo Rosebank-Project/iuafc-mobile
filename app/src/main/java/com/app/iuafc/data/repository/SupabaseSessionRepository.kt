@@ -97,8 +97,8 @@ class SupabaseSessionRepository(
     }
 
     /**
-     * Reads the user's role from the `profiles` table (issue #1). Until that table
-     * exists, new users are treated as Church Members.
+     * Reads the user's role from the `profiles` table (database/profiles.sql). If it cannot
+     * be read (e.g. offline), the user is treated as a Church Member.
      */
     private suspend fun loadProfile(user: UserInfo): UserProfile {
         val fallback = UserProfile(
@@ -109,7 +109,7 @@ class SupabaseSessionRepository(
         )
         return try {
             supabase.from("profiles")
-                .select { filter { eq("id", user.id) } }
+                .select(SupabaseUserRepository.PROFILE_COLUMNS) { filter { eq("id", user.id) } }
                 .decodeSingleOrNull<UserProfile>()
                 ?: fallback
         } catch (e: CancellationException) {
