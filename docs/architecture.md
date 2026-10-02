@@ -7,6 +7,7 @@ app/src/main/java/com/app/iuafc/
 ├── AppContainer.kt          # creates the repositories once (simple dependency injection)
 ├── MainActivity.kt          # shows Login when signed out, MainScaffold when signed in
 ├── data/
+│   ├── mock/MockData.kt     # sample data (≥10 records per table) until Supabase tables exist
 │   ├── model/               # data classes matching the database tables
 │   └── repository/          # talks to Supabase (one repository per feature)
 ├── navigation/
@@ -40,22 +41,31 @@ and keep the function signature.
 
 ## Pattern to follow
 
-**1. Repository** (`data/repository/EventRepository.kt`) – loads and saves data. Until Supabase
-is connected (#19) you can return fake data from `lib/seed-data.ts` of the website.
+**1. Repository** (`data/repository/EventRepository.kt`) – an interface, with a mock version
+that uses `MockData` until the Supabase tables are ready (#1, #2). When they are, add a
+Supabase version and change one line in `AppContainer` – the screen stays the same.
 
 ```kotlin
-class EventRepository {
-    suspend fun getEvents(): List<Event> = TODO("Supabase query")
+interface EventRepository {
+    suspend fun getEvents(): List<Event>
+}
+
+class MockEventRepository : EventRepository {
+    private val events = MockData.events.toMutableList()
+    override suspend fun getEvents(): List<Event> = events.toList()
+}
+
+// Later:
+class SupabaseEventRepository(private val supabase: SupabaseClient) : EventRepository {
+    override suspend fun getEvents(): List<Event> =
+        supabase.from("events").select().decodeList<Event>()
 }
 ```
 
 Register it in `AppContainer`:
 
 ```kotlin
-class AppContainer {
-    val sessionRepository = SessionRepository()
-    val eventRepository = EventRepository()
-}
+val eventRepository: EventRepository = MockEventRepository()
 ```
 
 **2. ViewModel** (`ui/screens/events/EventsViewModel.kt`) – exposes a `UiState`.
