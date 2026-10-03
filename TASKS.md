@@ -22,7 +22,7 @@
 | **Demo video** with voice-over, showing every feature + the data stored in auth service, API and database | 10 |
 
 Also required (not on the rubric, but in the brief):
-- Keep **Azure DevOps** (or similar) updated during the whole implementation.
+- Keep the project tracking tool updated during the whole implementation ("Azure DevOps or a similar tool") – we use **GitHub** only: issues, pull requests, Actions and a **GitHub Projects** board.
 - Regular team meetings (physical or virtual).
 - Update the website to use the same backend.
 - Word document with a cover page, an index and GitHub links. **No zip files.**
@@ -68,7 +68,7 @@ Everyone codes. Each member works on a branch (`feature/<name>-<feature>`) and o
 - [ ] **R6. Test documentation**: test cases + results (screenshots) for the report
 
 ### Alexandra – Project Manager
-- [ ] **A1. Azure DevOps** *(Week 6, then ongoing)*: create the project, add the group, turn this file into Epics/User Stories/Tasks, set up sprints, keep the board updated every week (take screenshots for the report)
+- [ ] **A1. GitHub Projects board** *(Week 6, then ongoing)*: create the board, add every issue with its assignee and week, keep it updated every week (take screenshots for the report)
 - [ ] **A2. Meetings**: schedule the weekly meeting, keep minutes (date, attendees, decisions, actions)
 - [ ] **A3. Screens**: Home/Dashboard (summary cards per role), Announcements (list + create for Admin/Pastor), Notifications
 - [ ] **A4. Settings** *(10 marks)*: edit profile, change password, dark/light theme, notification on/off, language (optional), about, logout – saved with DataStore/Supabase
@@ -79,7 +79,7 @@ Everyone codes. Each member works on a branch (`feature/<name>-<feature>`) and o
 - [ ] **V2. Screen**: Reports (attendance, donations and membership summaries)
 - [ ] **V3. In-app Help**: Help/FAQ screen accessible from Settings, explaining each feature
 - [ ] **V4. User documentation**: user manual with labelled screenshots of every screen (how to register, log in, use each feature)
-- [ ] **V5. README.md**: description, features, screenshots, setup steps, how to run the tests, links (website, video, Azure DevOps)
+- [ ] **V5. README.md**: description, features, screenshots, setup steps, how to run the tests, links (website, video, GitHub Projects board)
 - [ ] **V6. Task 2 report**: cover page, index, GitHub links, and evidence collected from everyone (DB, API, tests, DevOps, meeting minutes)
 
 ---
@@ -99,4 +99,4 @@ Everyone codes. Each member works on a branch (`feature/<name>-<feature>`) and o
 - Small commits with clear messages (`feat: add events screen`, `fix: login crash on empty email`).
 - Never commit API keys, `local.properties` or `google-services.json`.
 - Everyone installs **Android SDK Platform 37.1** (Android Studio → Settings → Android SDK).
-- Update your Azure DevOps tasks when you start/finish them.
+- Move your issue on the GitHub Projects board when you start/finish it.
