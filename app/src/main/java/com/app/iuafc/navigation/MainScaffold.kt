@@ -86,7 +86,12 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
 
             // Bottom bar tabs
             composable<DashboardRoute> {
-                DashboardScreen(onOpenNotifications = { navController.navigate(NotificationsRoute) })
+                DashboardScreen(
+                    user = user,
+                    onOpenNotifications = {
+                        navController.navigate(NotificationsRoute)
+                    },
+                )
             }
             composable<EventsRoute> { EventsScreen() }
             composable<AnnouncementsRoute> { AnnouncementsScreen() }

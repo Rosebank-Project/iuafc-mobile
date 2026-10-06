@@ -1,5 +1,6 @@
 package com.app.iuafc
 
+
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -14,6 +15,9 @@ import com.app.iuafc.data.repository.SupabaseUserRepository
 import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import com.app.iuafc.data.repository.DashboardRepository
+import com.app.iuafc.data.repository.MockDashboardRepository
+
 
 /**
  * Creates the repositories once and shares them with the whole app.
@@ -29,6 +33,7 @@ class AppContainer(appScope: CoroutineScope) {
 
     // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
     val memberRepository: MemberRepository = MockMemberRepository()
+    val dashboardRepository: DashboardRepository = MockDashboardRepository()
     val userRepository: UserRepository =
         if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
         else MockUserRepository()
