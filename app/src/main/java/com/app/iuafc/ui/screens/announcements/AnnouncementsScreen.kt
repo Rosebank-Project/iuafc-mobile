@@ -1,11 +1,15 @@
 package com.app.iuafc.ui.screens.announcements
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,8 +35,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.iuafc.data.model.Announcement
@@ -93,90 +100,38 @@ fun AnnouncementsScreen(
         when (val state = uiState) {
 
             UiState.Loading -> {
-                Text(
-                    text = "Loading announcements...",
-                    modifier = Modifier
-                        .padding(padding)
-                        .padding(24.dp),
+                AnnouncementLoadingState(
+                    padding = padding,
                 )
             }
 
             is UiState.Error -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(padding)
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "Unable to load announcements",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-
-                    Text(
-                        text = state.message,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-
-                    Button(
-                        onClick = viewModel::loadAnnouncements,
-                    ) {
-                        Text("Retry")
-                    }
-                }
+                AnnouncementErrorState(
+                    padding = padding,
+                    message = state.message,
+                    onRetry = viewModel::loadAnnouncements,
+                )
             }
 
             is UiState.Success -> {
                 val announcements = state.data
 
                 if (announcements.isEmpty()) {
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(padding)
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = "No announcements",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-
-                        Text(
-                            text = "There are currently no church announcements available.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
+                    AnnouncementEmptyState(
+                        padding = padding,
+                    )
                 } else {
-
-                    LazyColumn(
-                        modifier = Modifier.padding(padding),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(
-                            items = announcements,
-                            key = { it.id },
-                        ) { announcement ->
-
-                            AnnouncementCard(
-                                announcement = announcement,
-                                canManage = canManageAnnouncements,
-                                onEdit = {
-                                    announcementToEdit = announcement
-                                },
-                                onDelete = {
-                                    announcementToDelete = announcement
-                                },
-                            )
-                        }
-                    }
+                    AnnouncementList(
+                        padding = padding,
+                        announcements = announcements,
+                        canManage = canManageAnnouncements,
+                        onEdit = { announcement ->
+                            announcementToEdit = announcement
+                        },
+                        onDelete = { announcement ->
+                            announcementToDelete = announcement
+                        },
+                    )
                 }
             }
         }
@@ -232,11 +187,14 @@ fun AnnouncementsScreen(
                 announcementToDelete = null
             },
             title = {
-                Text("Delete Announcement")
+                Text(
+                    text = "Delete Announcement",
+                    fontWeight = FontWeight.Bold,
+                )
             },
             text = {
                 Text(
-                    "Are you sure you want to delete \"${announcement.title}\"?"
+                    text = "Are you sure you want to delete \"${announcement.title}\"?",
                 )
             },
             confirmButton = {
@@ -249,7 +207,11 @@ fun AnnouncementsScreen(
                         announcementToDelete = null
                     },
                 ) {
-                    Text("Delete")
+                    Text(
+                        text = "Delete",
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             },
             dismissButton = {
@@ -266,6 +228,65 @@ fun AnnouncementsScreen(
 }
 
 @Composable
+private fun AnnouncementList(
+    padding: PaddingValues,
+    announcements: List<Announcement>,
+    canManage: Boolean,
+    onEdit: (Announcement) -> Unit,
+    onDelete: (Announcement) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = padding.calculateTopPadding() + 16.dp,
+            end = 16.dp,
+            bottom = padding.calculateBottomPadding() + 24.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Stay informed",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Spacer(
+                    modifier = Modifier.height(4.dp),
+                )
+
+                Text(
+                    text = "Keep up with the latest news, events, and updates from the church.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        items(
+            items = announcements,
+            key = { it.id },
+        ) { announcement ->
+
+            AnnouncementCard(
+                announcement = announcement,
+                canManage = canManage,
+                onEdit = {
+                    onEdit(announcement)
+                },
+                onDelete = {
+                    onDelete(announcement)
+                },
+            )
+        }
+    }
+}
+
+@Composable
 private fun AnnouncementCard(
     announcement: Announcement,
     canManage: Boolean,
@@ -274,25 +295,64 @@ private fun AnnouncementCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp,
+        ),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Campaign,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Campaign,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.size(12.dp),
                 )
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = announcement.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(3.dp),
+                    )
+
+                    Text(
+                        text = formatDate(announcement.publishDate),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
 
                 if (canManage) {
                     Row {
@@ -311,6 +371,7 @@ private fun AnnouncementCard(
                             Icon(
                                 imageVector = Icons.Outlined.Delete,
                                 contentDescription = "Delete announcement",
+                                tint = MaterialTheme.colorScheme.error,
                             )
                         }
                     }
@@ -318,23 +379,140 @@ private fun AnnouncementCard(
             }
 
             Text(
-                text = announcement.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Text(
                 text = announcement.message,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            Text(
-                text = formatDate(announcement.publishDate),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
         }
+    }
+}
+
+@Composable
+private fun AnnouncementLoadingState(
+    padding: PaddingValues,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = padding.calculateTopPadding() + 24.dp,
+                start = 24.dp,
+                end = 24.dp,
+                bottom = padding.calculateBottomPadding(),
+            ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "Loading announcements...",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Text(
+            text = "Please wait while the latest church announcements are loaded.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun AnnouncementErrorState(
+    padding: PaddingValues,
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = padding.calculateTopPadding() + 24.dp,
+                start = 24.dp,
+                end = 24.dp,
+                bottom = padding.calculateBottomPadding(),
+            ),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            modifier = Modifier.size(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
+
+        Text(
+            text = "Unable to load announcements",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+
+        Button(
+            onClick = onRetry,
+        ) {
+            Text("Retry")
+        }
+    }
+}
+
+@Composable
+private fun AnnouncementEmptyState(
+    padding: PaddingValues,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = padding.calculateTopPadding() + 32.dp,
+                start = 24.dp,
+                end = 24.dp,
+                bottom = padding.calculateBottomPadding(),
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Surface(
+            modifier = Modifier.size(68.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+
+        Text(
+            text = "No announcements",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = "There are currently no church announcements available.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -362,7 +540,10 @@ private fun AnnouncementDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(title)
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+            )
         },
         text = {
             Column(
@@ -376,6 +557,9 @@ private fun AnnouncementDialog(
                     label = {
                         Text("Title")
                     },
+                    placeholder = {
+                        Text("Enter announcement title")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -387,6 +571,9 @@ private fun AnnouncementDialog(
                     },
                     label = {
                         Text("Message")
+                    },
+                    placeholder = {
+                        Text("Enter announcement message")
                     },
                     minLines = 4,
                     modifier = Modifier.fillMaxWidth(),
@@ -403,7 +590,10 @@ private fun AnnouncementDialog(
                     )
                 },
             ) {
-                Text(confirmText)
+                Text(
+                    text = confirmText,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         },
         dismissButton = {
