@@ -20,29 +20,81 @@ import com.app.iuafc.ui.theme.IUAFCTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
-        val session = (application as IuafcApplication).container.sessionRepository
+
+        val container =
+            (application as IuafcApplication).container
+
+        val session =
+            container.sessionRepository
+
+        val settings =
+            container.settingsRepository
+
         setContent {
-            IUAFCTheme {
+            val themePreference by
+            settings.themePreference.collectAsStateWithLifecycle()
+
+            IUAFCTheme(
+                themePreference = themePreference,
+            ) {
                 IuafcApp(session)
             }
         }
     }
 }
 
-/** Shows the login screens when signed out, and the main app when signed in. */
+/**
+ * Shows the login screens when signed out,
+ * and the main app when signed in.
+ */
 @Composable
-fun IuafcApp(session: SessionRepository) {
-    val state by session.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
+fun IuafcApp(
+    session: SessionRepository,
+) {
+    val state by
+    session.state.collectAsStateWithLifecycle()
+
+    val scope =
+        rememberCoroutineScope()
 
     when (val current = state) {
-        SessionState.Loading -> Surface(color = MaterialTheme.colorScheme.background) { LoadingState() }
-        SessionState.SignedOut ->
-            if (session.isDemo) DemoLoginScreen(onSignIn = session::signInAsDemo) else AuthNavHost()
-        is SessionState.SignedIn ->
-            MainScaffold(user = current.user, onSignOut = { scope.launch { session.signOut() } })
+
+        SessionState.Loading -> {
+            Surface(
+                color =
+                    MaterialTheme
+                        .colorScheme
+                        .background,
+            ) {
+                LoadingState()
+            }
+        }
+
+        SessionState.SignedOut -> {
+            if (session.isDemo) {
+                DemoLoginScreen(
+                    onSignIn =
+                        session::signInAsDemo,
+                )
+            } else {
+                AuthNavHost()
+            }
+        }
+
+        is SessionState.SignedIn -> {
+            MainScaffold(
+                user = current.user,
+                onSignOut = {
+                    scope.launch {
+                        session.signOut()
+                    }
+                },
+            )
+        }
     }
 }

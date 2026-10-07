@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.app.iuafc.data.repository.ThemePreference
 
 private val LightColorScheme = lightColorScheme(
     primary = Navy,
@@ -64,19 +65,34 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 /**
- * App theme. Uses the church brand colours (navy and gold) instead of the
- * phone's dynamic colours, so the app always matches the website.
+ * App theme.
  *
- * [darkTheme] will be controlled by the Settings screen (issue #10).
+ * The theme preference is controlled by the Settings screen:
+ *
+ * SYSTEM -> follows the phone's system theme
+ * LIGHT  -> always uses the light theme
+ * DARK   -> always uses the dark theme
  */
 @Composable
 fun IUAFCTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    themePreference: ThemePreference = ThemePreference.SYSTEM,
+    content: @Composable () -> Unit,
 ) {
+    val systemDarkTheme = isSystemInDarkTheme()
+
+    val darkTheme = when (themePreference) {
+        ThemePreference.SYSTEM -> systemDarkTheme
+        ThemePreference.LIGHT -> false
+        ThemePreference.DARK -> true
+    }
+
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+        colorScheme = if (darkTheme) {
+            DarkColorScheme
+        } else {
+            LightColorScheme
+        },
         typography = Typography,
-        content = content
+        content = content,
     )
 }

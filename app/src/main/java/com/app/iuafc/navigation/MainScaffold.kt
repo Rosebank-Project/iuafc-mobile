@@ -132,7 +132,11 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
             roleScreen(user, AppDestination.MY_ATTENDANCE, MyAttendanceRoute::class) { MyAttendanceScreen(back) }
             roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) { DonationsScreen(back) }
             roleScreen(user, AppDestination.REPORTS, ReportsRoute::class) { ReportsScreen(back) }
-            roleScreen(user, AppDestination.SETTINGS, SettingsRoute::class) { SettingsScreen(back) }
+            roleScreen(user, AppDestination.SETTINGS, SettingsRoute::class) { SettingsScreen(
+                user = user,
+                onBack = back,
+                onSignOut = onSignOut,
+            ) }
             roleScreen(user, AppDestination.HELP, HelpRoute::class) { HelpScreen(back) }
         }
     }
