@@ -1,36 +1,55 @@
 package com.app.iuafc.ui.screens.notifications
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.app.iuafc.data.mock.MockData
-import com.app.iuafc.data.model.Announcement
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.app.iuafc.data.model.AppNotification
+import com.app.iuafc.data.model.NotificationType
+import com.app.iuafc.ui.common.UiState
 import com.app.iuafc.ui.components.ScreenScaffold
-import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** Notifications screen – owner: Alexandra, issue #9. */
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val notifications = MockData.announcements
-        .sortedByDescending { it.publishDate }
+    val viewModel: NotificationViewModel = viewModel(
+        factory = NotificationViewModel.factory(),
+    )
+
+    val uiState by viewModel.uiState.collectAsState()
 
     ScreenScaffold(
         title = "Notifications",
@@ -38,43 +57,129 @@ fun NotificationsScreen(
         onBack = onBack,
     ) { padding ->
 
-        if (notifications.isEmpty()) {
+        when (val state = uiState) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(padding)
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            UiState.Loading -> {
                 Text(
-                    text = "No notifications",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-
-                Text(
-                    text = "You don't have any notifications at the moment.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "Loading notifications...",
+                    modifier = Modifier
+                        .padding(padding)
+                        .padding(24.dp),
                 )
             }
 
-        } else {
-
-            LazyColumn(
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(
-                    items = notifications,
-                    key = { it.id },
-                ) { announcement ->
-
-                    NotificationItem(
-                        announcement = announcement,
+            is UiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(padding)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "Unable to load notifications",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
                     )
+
+                    Text(
+                        text = state.message,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+
+                    TextButton(
+                        onClick = viewModel::loadNotifications,
+                    ) {
+                        Text("Retry")
+                    }
+                }
+            }
+
+            is UiState.Success -> {
+
+                val notifications = state.data
+
+                val unreadCount =
+                    notifications.count { !it.isRead }
+
+                if (notifications.isEmpty()) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(padding)
+                            .padding(24.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "No notifications",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+
+                        Text(
+                            text = "You don't have any notifications at the moment.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                } else {
+
+                    LazyColumn(
+                        modifier = Modifier.padding(padding),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(12.dp),
+                    ) {
+
+                        item {
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement =
+                                    Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    text = if (unreadCount == 0) {
+                                        "All notifications read"
+                                    } else {
+                                        "$unreadCount unread"
+                                    },
+                                    style =
+                                        MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+
+                                if (unreadCount > 0) {
+                                    TextButton(
+                                        onClick =
+                                            viewModel::markAllAsRead,
+                                    ) {
+                                        Text("Mark all as read")
+                                    }
+                                }
+                            }
+                        }
+
+                        items(
+                            items = notifications,
+                            key = { it.id },
+                        ) { notification ->
+
+                            NotificationItem(
+                                notification = notification,
+                                onClick = {
+                                    if (!notification.isRead) {
+                                        viewModel.markAsRead(
+                                            notification.id,
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -83,46 +188,97 @@ fun NotificationsScreen(
 
 @Composable
 private fun NotificationItem(
-    announcement: Announcement,
+    notification: AppNotification,
+    onClick: () -> Unit,
 ) {
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor =
+                if (notification.isRead) {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer
+                },
+        ),
     ) {
 
-        Icon(
-            imageVector = Icons.Outlined.Campaign,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
 
-        Text(
-            text = announcement.title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
+            Icon(
+                imageVector = notificationIcon(notification.type),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
 
-        Text(
-            text = announcement.message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
 
-        Text(
-            text = formatDate(announcement.publishDate),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+                Text(
+                    text = notification.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (notification.isRead) {
+                        FontWeight.Medium
+                    } else {
+                        FontWeight.Bold
+                    },
+                )
+
+                Text(
+                    text = notification.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color =
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Text(
+                    text = formatTimestamp(
+                        notification.timestamp,
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            if (!notification.isRead) {
+                Icon(
+                    imageVector =
+                        Icons.Outlined.Notifications,
+                    contentDescription = "Unread",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }
 
-private fun formatDate(value: String): String =
+private fun notificationIcon(
+    type: NotificationType,
+) = when (type) {
+    NotificationType.Announcement ->
+        Icons.Outlined.Campaign
+
+    NotificationType.Event ->
+        Icons.Outlined.CalendarMonth
+
+    NotificationType.ActivityApproval ->
+        Icons.Outlined.CheckCircle
+}
+
+private fun formatTimestamp(
+    value: String,
+): String =
     try {
-        LocalDate.parse(value).format(
+        LocalDateTime.parse(value).format(
             DateTimeFormatter.ofPattern(
-                "dd MMM yyyy",
+                "dd MMM yyyy, HH:mm",
                 Locale.getDefault(),
             ),
         )

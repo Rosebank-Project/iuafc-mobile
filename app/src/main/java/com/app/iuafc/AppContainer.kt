@@ -18,6 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import com.app.iuafc.data.repository.DashboardRepository
 import com.app.iuafc.data.repository.MockDashboardRepository
+import com.app.iuafc.data.repository.NotificationRepository
+import com.app.iuafc.data.repository.MockNotificationRepository
 
 
 /**
@@ -36,6 +38,7 @@ class AppContainer(appScope: CoroutineScope) {
     val memberRepository: MemberRepository = MockMemberRepository()
     val dashboardRepository: DashboardRepository = MockDashboardRepository()
     val announcementRepository: AnnouncementRepository = MockAnnouncementRepository()
+    val notificationRepository: NotificationRepository = MockNotificationRepository()
     val userRepository: UserRepository =
         if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
         else MockUserRepository()
