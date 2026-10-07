@@ -1,13 +1,18 @@
 package com.app.iuafc.ui.screens.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,15 +21,19 @@ import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.People
+import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,10 +64,13 @@ fun DashboardScreen(
         title = "Home",
         modifier = modifier,
         actions = {
-            IconButton(onClick = onOpenNotifications) {
+            IconButton(
+                onClick = onOpenNotifications,
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
                     contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         },
@@ -69,7 +81,6 @@ fun DashboardScreen(
             modifier = Modifier.padding(padding),
             onRetry = viewModel::load,
         ) { data ->
-
             DashboardContent(
                 user = user,
                 data = data,
@@ -84,62 +95,75 @@ private fun DashboardContent(
     data: DashboardData,
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 20.dp,
+            bottom = 24.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
 
+        /*
+         * Header
+         */
         item {
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = "Welcome",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 Text(
-                    text = "Here’s an overview of your church activities.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Here's an overview of your church activities.",
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Text(
                     text = user.role.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.secondary,
                 )
             }
         }
 
+        /*
+         * Summary cards
+         */
         item {
-            SummaryGrid(data.summaries)
+            SummaryGrid(
+                summaries = data.summaries,
+            )
         }
 
+        /*
+         * Upcoming events
+         */
         item {
-            Text(
-                text = "Upcoming Events",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
+            SectionHeader(
+                title = "Upcoming Events",
+                icon = Icons.Outlined.CalendarMonth,
             )
         }
 
         if (data.upcomingEvents.isEmpty()) {
-
             item {
-                Text(
-                    text = "No upcoming events.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptySection(
+                    message = "No upcoming events.",
                 )
             }
-
         } else {
-
             items(
                 items = data.upcomingEvents,
                 key = { it.id },
             ) { event ->
-
                 EventSummaryCard(
                     title = event.name,
                     date = event.date,
@@ -149,32 +173,27 @@ private fun DashboardContent(
             }
         }
 
+        /*
+         * Latest announcements
+         */
         item {
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = "Latest Announcements",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
+            SectionHeader(
+                title = "Latest Announcements",
+                icon = Icons.Outlined.Campaign,
             )
         }
 
         if (data.latestAnnouncements.isEmpty()) {
-
             item {
-                Text(
-                    text = "No announcements available.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptySection(
+                    message = "No announcements available.",
                 )
             }
-
         } else {
-
             items(
                 items = data.latestAnnouncements,
                 key = { it.id },
             ) { announcement ->
-
                 AnnouncementSummaryCard(
                     title = announcement.title,
                     message = announcement.message,
@@ -192,14 +211,12 @@ private fun SummaryGrid(
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-
         summaries.chunked(2).forEach { rowItems ->
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-
                 rowItems.forEach { summary ->
 
                     SummaryCard(
@@ -209,7 +226,9 @@ private fun SummaryGrid(
                 }
 
                 if (rowItems.size == 1) {
-                    Spacer(Modifier.weight(1f))
+                    Spacer(
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -223,30 +242,43 @@ private fun SummaryCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor =
-                MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
         ),
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
 
-            Icon(
-                imageVector = summaryIcon(summary.label),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = summaryIcon(summary.label),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(21.dp),
+                )
+            }
 
             Text(
                 text = summary.value,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
 
             Text(
@@ -258,20 +290,31 @@ private fun SummaryCard(
     }
 }
 
-private fun summaryIcon(label: String) =
-    when {
-        label.contains("Member", ignoreCase = true) ->
-            Icons.Outlined.People
+@Composable
+private fun SectionHeader(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(22.dp),
+        )
 
-        label.contains("Event", ignoreCase = true) ->
-            Icons.Outlined.CalendarMonth
-
-        label.contains("Announcement", ignoreCase = true) ->
-            Icons.Outlined.Campaign
-
-        else ->
-            Icons.Outlined.Campaign
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
     }
+}
 
 @Composable
 private fun EventSummaryCard(
@@ -282,25 +325,46 @@ private fun EventSummaryCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp,
+        ),
     ) {
-
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
 
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
             )
 
-            Text(
-                text = "${formatDate(date)} • $time",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarMonth,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+
+                Spacer(
+                    modifier = Modifier.width(8.dp),
+                )
+
+                Text(
+                    text = "${formatDate(date)} • $time",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
             Text(
                 text = venue,
@@ -319,19 +383,36 @@ private fun AnnouncementSummaryCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp,
+        ),
     ) {
-
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
 
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(20.dp),
+                )
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
             Text(
                 text = message,
@@ -344,13 +425,57 @@ private fun AnnouncementSummaryCard(
             Text(
                 text = formatDate(date),
                 style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
     }
 }
 
-private fun formatDate(value: String): String =
+@Composable
+private fun EmptySection(
+    message: String,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun summaryIcon(
+    label: String,
+) =
+    when {
+        label.contains("Member", ignoreCase = true) ->
+            Icons.Outlined.People
+
+        label.contains("Event", ignoreCase = true) ->
+            Icons.Outlined.CalendarMonth
+
+        label.contains("Announcement", ignoreCase = true) ->
+            Icons.Outlined.Campaign
+
+        label.contains("Donation", ignoreCase = true) ||
+                label.contains("Giving", ignoreCase = true) ->
+            Icons.Outlined.VolunteerActivism
+
+        else ->
+            Icons.Outlined.Campaign
+    }
+
+private fun formatDate(
+    value: String,
+): String =
     try {
         LocalDate.parse(value).format(
             DateTimeFormatter.ofPattern(

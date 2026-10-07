@@ -1,6 +1,7 @@
 package com.app.iuafc
 
-
+import com.app.iuafc.data.repository.AnnouncementRepository
+import com.app.iuafc.data.repository.MockAnnouncementRepository
 import android.app.Application
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -34,6 +35,7 @@ class AppContainer(appScope: CoroutineScope) {
     // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
     val memberRepository: MemberRepository = MockMemberRepository()
     val dashboardRepository: DashboardRepository = MockDashboardRepository()
+    val announcementRepository: AnnouncementRepository = MockAnnouncementRepository()
     val userRepository: UserRepository =
         if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
         else MockUserRepository()

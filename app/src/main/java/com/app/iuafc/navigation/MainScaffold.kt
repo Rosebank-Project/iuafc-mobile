@@ -94,7 +94,11 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
                 )
             }
             composable<EventsRoute> { EventsScreen() }
-            composable<AnnouncementsRoute> { AnnouncementsScreen() }
+            composable<AnnouncementsRoute> {
+                AnnouncementsScreen(
+                    user = user,
+                )
+            }
             composable<MenuRoute> {
                 MenuScreen(
                     user = user,
