@@ -172,7 +172,9 @@ fun MainScaffold(
                 MenuScreen(
                     user = user,
                     onNavigate = { item ->
-                        navController.navigate(item.route)
+                        navController.navigate(item.route) {
+                            launchSingleTop = true
+                        }
                     },
                     onSignOut = onSignOut,
                 )
@@ -392,9 +394,9 @@ private fun <T : Any> NavGraphBuilder.roleScreen(
 private fun NavHostController.navigateToTab(route: Any) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) {
-            saveState = true
+            saveState = false
         }
         launchSingleTop = true
-        restoreState = true
+        restoreState = false
     }
 }
