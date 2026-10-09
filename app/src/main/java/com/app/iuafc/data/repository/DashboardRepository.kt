@@ -24,7 +24,9 @@ interface DashboardRepository {
 
 class MockDashboardRepository : DashboardRepository {
 
-    override suspend fun getDashboard(user: UserProfile): DashboardData {
+    override suspend fun getDashboard(
+        user: UserProfile,
+    ): DashboardData {
 
         val today = LocalDate.now().toString()
 
@@ -37,69 +39,89 @@ class MockDashboardRepository : DashboardRepository {
             .sortedByDescending { it.publishDate }
             .take(3)
 
+        val totalDonations = MockData.donations
+            .sumOf { it.amount }
+
+        val formattedDonations =
+            "ZAR ${"%,.0f".format(totalDonations)}"
+
         val summaries = when (user.role) {
 
+            /*
+             * Administrator dashboard
+             */
             Role.ADMINISTRATOR -> listOf(
                 DashboardSummary(
-                    "Members",
-                    MockData.members.size.toString(),
+                    label = "Total Members",
+                    value = MockData.members.size.toString(),
                 ),
                 DashboardSummary(
-                    "Upcoming Events",
-                    upcomingEvents.size.toString(),
+                    label = "Upcoming Events",
+                    value = upcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
-                    "Announcements",
-                    MockData.announcements.size.toString(),
+                    label = "Announcements",
+                    value = MockData.announcements.size.toString(),
                 ),
                 DashboardSummary(
-                    "Donations",
-                    "R ${"%,.2f".format(
-                        MockData.donations.sumOf { it.amount }
-                    )}",
+                    label = "Total Donations",
+                    value = formattedDonations,
                 ),
             )
 
+            /*
+             * Pastor dashboard
+             *
+             * Matches the initial dashboard mockup:
+             * Total Members
+             * Ministries
+             * Upcoming Events
+             * Total Donations
+             */
             Role.PASTOR -> listOf(
                 DashboardSummary(
-                    "Members",
-                    MockData.members.size.toString(),
+                    label = "Total Members",
+                    value = MockData.members.size.toString(),
                 ),
                 DashboardSummary(
-                    "Upcoming Events",
-                    upcomingEvents.size.toString(),
+                    label = "Ministries",
+                    value = MockData.ministries.size.toString(),
                 ),
                 DashboardSummary(
-                    "Announcements",
-                    MockData.announcements.size.toString(),
+                    label = "Upcoming Events",
+                    value = upcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
-                    "Ministries",
-                    MockData.ministries.size.toString(),
+                    label = "Total Donations",
+                    value = formattedDonations,
                 ),
             )
 
+            /*
+             * Finance Officer dashboard
+             */
             Role.FINANCE_OFFICER -> listOf(
                 DashboardSummary(
-                    "Donations",
-                    "R ${"%,.2f".format(
-                        MockData.donations.sumOf { it.amount }
-                    )}",
+                    label = "Total Donations",
+                    value = formattedDonations,
                 ),
                 DashboardSummary(
-                    "Members",
-                    MockData.members.size.toString(),
+                    label = "Total Members",
+                    value = MockData.members.size.toString(),
                 ),
                 DashboardSummary(
-                    "Upcoming Events",
-                    upcomingEvents.size.toString(),
+                    label = "Upcoming Events",
+                    value = upcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
-                    "Announcements",
-                    MockData.announcements.size.toString(),
+                    label = "Announcements",
+                    value = MockData.announcements.size.toString(),
                 ),
             )
 
+            /*
+             * Ministry Leader dashboard
+             */
             Role.MINISTRY_LEADER -> {
 
                 val activities = MockData.activities.count {
@@ -108,24 +130,27 @@ class MockDashboardRepository : DashboardRepository {
 
                 listOf(
                     DashboardSummary(
-                        "My Activities",
-                        activities.toString(),
+                        label = "My Activities",
+                        value = activities.toString(),
                     ),
                     DashboardSummary(
-                        "Upcoming Events",
-                        upcomingEvents.size.toString(),
+                        label = "Upcoming Events",
+                        value = upcomingEvents.size.toString(),
                     ),
                     DashboardSummary(
-                        "Announcements",
-                        MockData.announcements.size.toString(),
+                        label = "Announcements",
+                        value = MockData.announcements.size.toString(),
                     ),
                     DashboardSummary(
-                        "Ministries",
-                        MockData.ministries.size.toString(),
+                        label = "Ministries",
+                        value = MockData.ministries.size.toString(),
                     ),
                 )
             }
 
+            /*
+             * Church Member dashboard
+             */
             Role.CHURCH_MEMBER -> {
 
                 val attendance = MockData.attendance.count {
@@ -142,20 +167,20 @@ class MockDashboardRepository : DashboardRepository {
 
                 listOf(
                     DashboardSummary(
-                        "Upcoming Events",
-                        upcomingEvents.size.toString(),
+                        label = "Upcoming Events",
+                        value = upcomingEvents.size.toString(),
                     ),
                     DashboardSummary(
-                        "Announcements",
-                        MockData.announcements.size.toString(),
+                        label = "Announcements",
+                        value = MockData.announcements.size.toString(),
                     ),
                     DashboardSummary(
-                        "My Attendance",
-                        attendance.toString(),
+                        label = "My Attendance",
+                        value = attendance.toString(),
                     ),
                     DashboardSummary(
-                        "My Giving",
-                        "R ${"%,.2f".format(donations)}",
+                        label = "My Giving",
+                        value = "ZAR ${"%,.0f".format(donations)}",
                     ),
                 )
             }
