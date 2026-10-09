@@ -1,19 +1,38 @@
-
 package com.app.iuafc.navigation
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -45,7 +64,8 @@ import com.app.iuafc.ui.screens.settings.SettingsScreen
 import com.app.iuafc.ui.screens.users.UsersScreen
 import kotlin.reflect.KClass
 
-/** The signed-in part of the app: bottom navigation bar + every screen. */
+private val HeaderNavy = Color(0xFF112548)
+
 @Composable
 fun MainScaffold(
     user: UserProfile,
@@ -58,14 +78,37 @@ fun MainScaffold(
 
     val bottomItems = AppDestination.bottomBarFor(user.role)
 
-    val showBottomBar = bottomItems.any { item ->
-        currentDestination?.hierarchy?.any {
-            it.hasRoute(item.route::class)
-        } == true
+
+    val showBottomBar =
+        bottomItems.any { item ->
+            currentDestination?.hierarchy?.any {
+                it.hasRoute(item.route::class)
+            } == true
+        } ||
+                currentDestination?.hierarchy?.any {
+                    it.hasRoute(NotificationsRoute::class) ||
+                            it.hasRoute(SettingsRoute::class)
+                } == true
+
+    fun openNotifications() {
+        android.util.Log.d(
+            "NotificationNavigation",
+            "Bell clicked — navigating to NotificationsRoute"
+        )
+
+        navController.navigate(NotificationsRoute) {
+            launchSingleTop = true
+        }
     }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
+        topBar = {
+            SharedChurchHeader(
+                user = user,
+                onOpenNotifications = ::openNotifications,
+            )
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -83,9 +126,7 @@ fun MainScaffold(
                                     contentDescription = item.label,
                                 )
                             },
-                            label = {
-                                Text(item.label)
-                            },
+                            label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedTextColor =
                                     MaterialTheme.colorScheme.primary,
@@ -96,7 +137,6 @@ fun MainScaffold(
             }
         },
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = DashboardRoute,
@@ -104,19 +144,13 @@ fun MainScaffold(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
         ) {
-            val back: () -> Unit = {
-                navController.popBackStack()
-            }
-
+            val back: () -> Unit = { navController.popBackStack() }
             val isAdmin = user.role == Role.ADMINISTRATOR
 
-            // Dashboard
             composable<DashboardRoute> {
                 DashboardScreen(
                     user = user,
-                    onOpenNotifications = {
-                        navController.navigate(NotificationsRoute)
-                    },
+                    onOpenNotifications = ::openNotifications,
                     onOpenEvents = {
                         navController.navigateToTab(EventsRoute)
                     },
@@ -126,15 +160,12 @@ fun MainScaffold(
                 )
             }
 
-            // Bottom navigation tabs
             composable<EventsRoute> {
                 EventsScreen()
             }
 
             composable<AnnouncementsRoute> {
-                AnnouncementsScreen(
-                    user = user,
-                )
+                AnnouncementsScreen(user = user)
             }
 
             composable<MenuRoute> {
@@ -147,28 +178,15 @@ fun MainScaffold(
                 )
             }
 
-            // Screens opened from the Menu
-            roleScreen(
-                user = user,
-                destination = AppDestination.NOTIFICATIONS,
-                route = NotificationsRoute::class,
-            ) {
+            roleScreen(user, AppDestination.NOTIFICATIONS, NotificationsRoute::class) {
                 NotificationsScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.USERS,
-                route = UsersRoute::class,
-            ) {
+            roleScreen(user, AppDestination.USERS, UsersRoute::class) {
                 UsersScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.MEMBERS,
-                route = MembersRoute::class,
-            ) {
+            roleScreen(user, AppDestination.MEMBERS, MembersRoute::class) {
                 MembersScreen(
                     onBack = back,
                     canManage = isAdmin,
@@ -181,11 +199,7 @@ fun MainScaffold(
                 )
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.MEMBERS,
-                route = MemberDetailRoute::class,
-            ) {
+            roleScreen(user, AppDestination.MEMBERS, MemberDetailRoute::class) {
                 MemberDetailScreen(
                     onBack = back,
                     canManage = isAdmin,
@@ -196,67 +210,39 @@ fun MainScaffold(
             }
 
             roleScreen(
-                user = user,
-                destination = AppDestination.MEMBERS,
-                route = MemberFormRoute::class,
+                user,
+                AppDestination.MEMBERS,
+                MemberFormRoute::class,
                 adminOnly = true,
             ) {
                 MemberFormScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.MINISTRIES,
-                route = MinistriesRoute::class,
-            ) {
+            roleScreen(user, AppDestination.MINISTRIES, MinistriesRoute::class) {
                 MinistriesScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.ACTIVITIES,
-                route = ActivitiesRoute::class,
-            ) {
+            roleScreen(user, AppDestination.ACTIVITIES, ActivitiesRoute::class) {
                 ActivitiesScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.ATTENDANCE,
-                route = AttendanceRoute::class,
-            ) {
+            roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) {
                 AttendanceScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.MY_ATTENDANCE,
-                route = MyAttendanceRoute::class,
-            ) {
+            roleScreen(user, AppDestination.MY_ATTENDANCE, MyAttendanceRoute::class) {
                 MyAttendanceScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.DONATIONS,
-                route = DonationsRoute::class,
-            ) {
+            roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) {
                 DonationsScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.REPORTS,
-                route = ReportsRoute::class,
-            ) {
+            roleScreen(user, AppDestination.REPORTS, ReportsRoute::class) {
                 ReportsScreen(back)
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.SETTINGS,
-                route = SettingsRoute::class,
-            ) {
+            roleScreen(user, AppDestination.SETTINGS, SettingsRoute::class) {
                 SettingsScreen(
                     user = user,
                     onBack = back,
@@ -264,14 +250,118 @@ fun MainScaffold(
                 )
             }
 
-            roleScreen(
-                user = user,
-                destination = AppDestination.HELP,
-                route = HelpRoute::class,
-            ) {
+            roleScreen(user, AppDestination.HELP, HelpRoute::class) {
                 HelpScreen(back)
             }
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SharedChurchHeader(
+    user: UserProfile,
+    onOpenNotifications: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 3.dp,
+    ) {
+
+        TopAppBar(
+            modifier = Modifier
+                .heightIn(min = 100.dp)
+                .padding(top = 50.dp),
+            windowInsets = WindowInsets(0),
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(11.dp),
+                ) {
+                    Card(
+                        modifier = Modifier.size(42.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = HeaderNavy,
+                        ),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "✝",
+                                color = Color.White,
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "UIAFC",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            },
+            actions = {
+                IconButton(
+                    onClick = {
+                        android.util.Log.d(
+                            "NotificationNavigation",
+                            "Shared header bell clicked"
+                        )
+                        onOpenNotifications()
+                    },
+                    modifier = Modifier.size(56.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.NotificationsNone,
+                        contentDescription = "Open notifications",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .padding(start = 4.dp, end = 16.dp)
+                        .size(42.dp),
+                    shape = RoundedCornerShape(50),
+                    color = HeaderNavy,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = initialsFor(user.fullName),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                }
+            },
+        )
+    }
+}
+
+
+private fun initialsFor(fullName: String): String {
+    val parts = fullName.trim()
+        .split("\\s+".toRegex())
+        .filter { it.isNotBlank() }
+
+    return when {
+        parts.size >= 2 ->
+            "${parts.first().first()}${parts.last().first()}".uppercase()
+        parts.size == 1 -> parts.first().take(2).uppercase()
+        else -> "PJ"
     }
 }
 

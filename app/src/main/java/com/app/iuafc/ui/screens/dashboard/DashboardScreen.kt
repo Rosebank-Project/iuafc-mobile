@@ -135,12 +135,6 @@ private fun DashboardContent(
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
-            DashboardHeader(
-                user = user,
-                onOpenNotifications = onOpenNotifications,
-            )
-        }
 
         item {
             WelcomeSection(user = user)
@@ -187,77 +181,6 @@ private fun DashboardContent(
     }
 }
 
-@Composable
-private fun DashboardHeader(
-    user: UserProfile,
-    onOpenNotifications: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Card(
-            modifier = Modifier.size(38.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "✝",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Text(
-            text = "UIAFC",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        IconButton(onClick = onOpenNotifications) {
-            Icon(
-                imageVector = Icons.Outlined.NotificationsNone,
-                contentDescription = "Open notifications",
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        Card(
-            modifier = Modifier.size(40.dp),
-            shape = RoundedCornerShape(50),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = initialsFor(user.fullName),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun WelcomeSection(user: UserProfile) {

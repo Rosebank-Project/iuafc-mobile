@@ -173,8 +173,14 @@ fun SettingsScreen(
             // Header
             // -----------------------------------------------------
 
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = 4.dp,
+                        bottom = 8.dp,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
@@ -186,21 +192,15 @@ fun SettingsScreen(
                     )
 
                     Spacer(
-                        modifier = Modifier.size(4.dp),
+                        modifier = Modifier.size(8.dp),
                     )
 
-                    Text("Back")
+                    Text(
+                        text = "Back",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
-
-                Spacer(
-                    modifier = Modifier.weight(1f),
-                )
-
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
             }
 
             // -----------------------------------------------------
