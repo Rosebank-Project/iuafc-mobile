@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.app.iuafc.data.remote.SupabaseProvider
 import com.app.iuafc.data.repository.DemoSessionRepository
+import com.app.iuafc.data.repository.ChurchFeaturesRepository
 import com.app.iuafc.data.repository.MemberRepository
+import com.app.iuafc.data.repository.MockChurchFeaturesRepository
 import com.app.iuafc.data.repository.MockMemberRepository
 import com.app.iuafc.data.repository.MockUserRepository
 import com.app.iuafc.data.repository.SessionRepository
@@ -29,6 +31,7 @@ class AppContainer(appScope: CoroutineScope) {
 
     // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
     val memberRepository: MemberRepository = MockMemberRepository()
+    val churchFeaturesRepository: ChurchFeaturesRepository = MockChurchFeaturesRepository()
     val userRepository: UserRepository =
         if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
         else MockUserRepository()
