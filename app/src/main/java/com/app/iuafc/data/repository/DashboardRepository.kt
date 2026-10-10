@@ -1,3 +1,4 @@
+
 package com.app.iuafc.data.repository
 
 import com.app.iuafc.data.mock.MockData
@@ -22,7 +23,10 @@ interface DashboardRepository {
     suspend fun getDashboard(user: UserProfile): DashboardData
 }
 
-class MockDashboardRepository : DashboardRepository {
+class MockDashboardRepository(
+    private val announcementRepository: AnnouncementRepository =
+        MockAnnouncementRepository(),
+) : DashboardRepository {
 
     override suspend fun getDashboard(
         user: UserProfile,
@@ -30,13 +34,17 @@ class MockDashboardRepository : DashboardRepository {
 
         val today = LocalDate.now().toString()
 
-        val upcomingEvents = MockData.events
+        // Keep all upcoming events for accurate summary counts.
+        val allUpcomingEvents = MockData.events
             .filter { it.date >= today }
             .sortedBy { it.date }
-            .take(3)
 
-        val latestAnnouncements = MockData.announcements
-            .sortedByDescending { it.publishDate }
+        // Display only the first three upcoming events.
+        val upcomingEvents = allUpcomingEvents.take(3)
+
+        // Use the announcement repository shared by the app.
+        val latestAnnouncements = announcementRepository
+            .getAnnouncements()
             .take(3)
 
         val totalDonations = MockData.donations
@@ -47,9 +55,6 @@ class MockDashboardRepository : DashboardRepository {
 
         val summaries = when (user.role) {
 
-            /*
-             * Administrator dashboard
-             */
             Role.ADMINISTRATOR -> listOf(
                 DashboardSummary(
                     label = "Total Members",
@@ -57,7 +62,7 @@ class MockDashboardRepository : DashboardRepository {
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
-                    value = upcomingEvents.size.toString(),
+                    value = allUpcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Announcements",
@@ -69,15 +74,6 @@ class MockDashboardRepository : DashboardRepository {
                 ),
             )
 
-            /*
-             * Pastor dashboard
-             *
-             * Matches the initial dashboard mockup:
-             * Total Members
-             * Ministries
-             * Upcoming Events
-             * Total Donations
-             */
             Role.PASTOR -> listOf(
                 DashboardSummary(
                     label = "Total Members",
@@ -89,7 +85,7 @@ class MockDashboardRepository : DashboardRepository {
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
-                    value = upcomingEvents.size.toString(),
+                    value = allUpcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Total Donations",
@@ -97,9 +93,6 @@ class MockDashboardRepository : DashboardRepository {
                 ),
             )
 
-            /*
-             * Finance Officer dashboard
-             */
             Role.FINANCE_OFFICER -> listOf(
                 DashboardSummary(
                     label = "Total Donations",
@@ -111,7 +104,7 @@ class MockDashboardRepository : DashboardRepository {
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
-                    value = upcomingEvents.size.toString(),
+                    value = allUpcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Announcements",
@@ -119,11 +112,7 @@ class MockDashboardRepository : DashboardRepository {
                 ),
             )
 
-            /*
-             * Ministry Leader dashboard
-             */
             Role.MINISTRY_LEADER -> {
-
                 val activities = MockData.activities.count {
                     it.ministryId == user.ministryId
                 }
@@ -135,7 +124,7 @@ class MockDashboardRepository : DashboardRepository {
                     ),
                     DashboardSummary(
                         label = "Upcoming Events",
-                        value = upcomingEvents.size.toString(),
+                        value = allUpcomingEvents.size.toString(),
                     ),
                     DashboardSummary(
                         label = "Announcements",
@@ -148,11 +137,7 @@ class MockDashboardRepository : DashboardRepository {
                 )
             }
 
-            /*
-             * Church Member dashboard
-             */
             Role.CHURCH_MEMBER -> {
-
                 val attendance = MockData.attendance.count {
                     user.memberId != null &&
                             it.memberId == user.memberId
@@ -168,7 +153,7 @@ class MockDashboardRepository : DashboardRepository {
                 listOf(
                     DashboardSummary(
                         label = "Upcoming Events",
-                        value = upcomingEvents.size.toString(),
+                        value = allUpcomingEvents.size.toString(),
                     ),
                     DashboardSummary(
                         label = "Announcements",

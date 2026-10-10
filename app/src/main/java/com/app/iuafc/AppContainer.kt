@@ -1,3 +1,4 @@
+
 package com.app.iuafc
 
 import android.app.Application
@@ -23,6 +24,7 @@ import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
+
 class AppContainer(
     private val context: android.content.Context,
     appScope: CoroutineScope,
@@ -38,6 +40,7 @@ class AppContainer(
             DemoSessionRepository()
         }
 
+    // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
     val memberRepository: MemberRepository =
         MockMemberRepository()
 
@@ -78,10 +81,6 @@ class IuafcApplication : Application() {
     }
 }
 
-/**
- * Use inside a `viewModelFactory { initializer { ... } }`
- * to access the application's AppContainer.
- */
 val CreationExtras.appContainer: AppContainer
     get() = (
             this[

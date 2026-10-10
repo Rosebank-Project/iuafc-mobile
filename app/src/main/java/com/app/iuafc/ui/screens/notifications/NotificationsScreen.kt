@@ -1,6 +1,6 @@
+
 package com.app.iuafc.ui.screens.notifications
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +15,6 @@ import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,9 +24,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,7 +42,7 @@ fun NotificationsScreen(
     modifier: Modifier = Modifier,
 ) {
     val viewModel: NotificationViewModel = viewModel(
-        factory = NotificationViewModel.factory(),
+        factory = NotificationViewModel.Factory,
     )
 
     val uiState by viewModel.uiState.collectAsState()
@@ -58,7 +54,6 @@ fun NotificationsScreen(
     ) { padding ->
 
         when (val state = uiState) {
-
             UiState.Loading -> {
                 Text(
                     text = "Loading notifications...",
@@ -96,21 +91,16 @@ fun NotificationsScreen(
             }
 
             is UiState.Success -> {
-
                 val notifications = state.data
-
-                val unreadCount =
-                    notifications.count { !it.isRead }
+                val unreadCount = notifications.count { !it.isRead }
 
                 if (notifications.isEmpty()) {
-
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(padding)
                             .padding(24.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = "No notifications",
@@ -124,22 +114,16 @@ fun NotificationsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-
                 } else {
-
                     LazyColumn(
                         modifier = Modifier.padding(padding),
                         contentPadding = PaddingValues(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-
                         item {
-
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement =
-                                    Arrangement.SpaceBetween,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
                                     text = if (unreadCount == 0) {
@@ -147,15 +131,13 @@ fun NotificationsScreen(
                                     } else {
                                         "$unreadCount unread"
                                     },
-                                    style =
-                                        MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                 )
 
                                 if (unreadCount > 0) {
                                     TextButton(
-                                        onClick =
-                                            viewModel::markAllAsRead,
+                                        onClick = viewModel::markAllAsRead,
                                     ) {
                                         Text("Mark all as read")
                                     }
@@ -167,14 +149,11 @@ fun NotificationsScreen(
                             items = notifications,
                             key = { it.id },
                         ) { notification ->
-
                             NotificationItem(
                                 notification = notification,
                                 onClick = {
                                     if (!notification.isRead) {
-                                        viewModel.markAsRead(
-                                            notification.id,
-                                        )
+                                        viewModel.markAsRead(notification.id)
                                     }
                                 },
                             )
@@ -196,20 +175,17 @@ private fun NotificationItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor =
-                if (notification.isRead) {
-                    MaterialTheme.colorScheme.surfaceContainerLow
-                } else {
-                    MaterialTheme.colorScheme.primaryContainer
-                },
+            containerColor = if (notification.isRead) {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            },
         ),
     ) {
-
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-
             Icon(
                 imageVector = notificationIcon(notification.type),
                 contentDescription = null,
@@ -220,7 +196,6 @@ private fun NotificationItem(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-
                 Text(
                     text = notification.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -234,14 +209,11 @@ private fun NotificationItem(
                 Text(
                     text = notification.message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Text(
-                    text = formatTimestamp(
-                        notification.timestamp,
-                    ),
+                    text = formatTimestamp(notification.timestamp),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -249,8 +221,7 @@ private fun NotificationItem(
 
             if (!notification.isRead) {
                 Icon(
-                    imageVector =
-                        Icons.Outlined.Notifications,
+                    imageVector = Icons.Outlined.Notifications,
                     contentDescription = "Unread",
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -262,19 +233,12 @@ private fun NotificationItem(
 private fun notificationIcon(
     type: NotificationType,
 ) = when (type) {
-    NotificationType.Announcement ->
-        Icons.Outlined.Campaign
-
-    NotificationType.Event ->
-        Icons.Outlined.CalendarMonth
-
-    NotificationType.ActivityApproval ->
-        Icons.Outlined.CheckCircle
+    NotificationType.Announcement -> Icons.Outlined.Campaign
+    NotificationType.Event -> Icons.Outlined.CalendarMonth
+    NotificationType.ActivityApproval -> Icons.Outlined.CheckCircle
 }
 
-private fun formatTimestamp(
-    value: String,
-): String =
+private fun formatTimestamp(value: String): String =
     try {
         LocalDateTime.parse(value).format(
             DateTimeFormatter.ofPattern(

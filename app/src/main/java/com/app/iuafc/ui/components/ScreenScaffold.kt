@@ -14,13 +14,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+/**
+ * Standard layout for every screen: top bar with the title, optional back
+ * button, optional actions and an optional floating action button.
+ *
+ * ```
+ * ScreenScaffold(title = "Events", onBack = onBack,
+ *     floatingActionButton = { FloatingActionButton(onClick = ...) { ... } }) { padding ->
+ *     LazyColumn(contentPadding = padding) { ... }
+ * }
+ * ```
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
-    showTopBar: Boolean = false,
+    showTopBar: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},

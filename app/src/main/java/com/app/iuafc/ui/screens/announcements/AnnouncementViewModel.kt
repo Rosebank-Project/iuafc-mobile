@@ -1,11 +1,13 @@
+
 package com.app.iuafc.ui.screens.announcements
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.repository.AnnouncementRepository
-import com.app.iuafc.data.repository.MockAnnouncementRepository
 import com.app.iuafc.ui.common.UiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +34,9 @@ class AnnouncementViewModel(
             _uiState.value = UiState.Loading
 
             try {
-                val announcements = repository.getAnnouncements()
-                _uiState.value = UiState.Success(announcements)
+                _uiState.value = UiState.Success(
+                    repository.getAnnouncements(),
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -56,8 +59,7 @@ class AnnouncementViewModel(
                     message = message,
                     createdBy = createdBy,
                 )
-
-                loadAnnouncements()
+                refreshAnnouncements()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -68,13 +70,11 @@ class AnnouncementViewModel(
         }
     }
 
-    fun updateAnnouncement(
-        announcement: Announcement,
-    ) {
+    fun updateAnnouncement(announcement: Announcement) {
         viewModelScope.launch {
             try {
                 repository.updateAnnouncement(announcement)
-                loadAnnouncements()
+                refreshAnnouncements()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -85,13 +85,11 @@ class AnnouncementViewModel(
         }
     }
 
-    fun deleteAnnouncement(
-        announcementId: String,
-    ) {
+    fun deleteAnnouncement(announcementId: String) {
         viewModelScope.launch {
             try {
                 repository.deleteAnnouncement(announcementId)
-                loadAnnouncements()
+                refreshAnnouncements()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -102,30 +100,28 @@ class AnnouncementViewModel(
         }
     }
 
+    private suspend fun refreshAnnouncements() {
+        _uiState.value = UiState.Success(
+            repository.getAnnouncements(),
+        )
+    }
+
     companion object {
 
-        fun factory(): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(
-                    modelClass: Class<T>,
-                ): T {
-
-                    if (
-                        modelClass.isAssignableFrom(
-                            AnnouncementViewModel::class.java,
-                        )
-                    ) {
-                        return AnnouncementViewModel(
-                            repository = MockAnnouncementRepository(),
-                        ) as T
-                    }
-
-                    throw IllegalArgumentException(
-                        "Unknown ViewModel class: ${modelClass.name}",
-                    )
-                }
+        /**
+         * Creates the ViewModel with the application's shared repository.
+         */
+        val Factory = viewModelFactory {
+            initializer {
+                AnnouncementViewModel(
+                    repository = appContainer.announcementRepository,
+                )
             }
+        }
+
+        /**
+         * Retained for screens that use the factory() function.
+         */
+        fun factory() = Factory
     }
 }

@@ -1,12 +1,14 @@
+
 package com.app.iuafc.navigation
 
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -42,6 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.app.iuafc.R
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.ui.components.EmptyState
@@ -66,6 +70,7 @@ import kotlin.reflect.KClass
 
 private val HeaderNavy = Color(0xFF112548)
 
+/** The signed-in part of the app: shared header, bottom navigation bar and screens. */
 @Composable
 fun MainScaffold(
     user: UserProfile,
@@ -75,9 +80,7 @@ fun MainScaffold(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-
     val bottomItems = AppDestination.bottomBarFor(user.role)
-
 
     val showBottomBar =
         bottomItems.any { item ->
@@ -91,17 +94,13 @@ fun MainScaffold(
                 } == true
 
     fun openNotifications() {
-        android.util.Log.d(
-            "NotificationNavigation",
-            "Bell clicked — navigating to NotificationsRoute"
-        )
-
         navController.navigate(NotificationsRoute) {
             launchSingleTop = true
         }
     }
 
     Scaffold(
+        // The TopAppBar handles status-bar insets; avoid fixed top padding.
         contentWindowInsets = WindowInsets(0),
         topBar = {
             SharedChurchHeader(
@@ -259,7 +258,6 @@ fun MainScaffold(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SharedChurchHeader(
@@ -271,12 +269,8 @@ private fun SharedChurchHeader(
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 3.dp,
     ) {
-
         TopAppBar(
-            modifier = Modifier
-                .heightIn(min = 100.dp)
-                .padding(top = 50.dp),
-            windowInsets = WindowInsets(0),
+            modifier = Modifier.heightIn(min = 100.dp),
             title = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -286,24 +280,25 @@ private fun SharedChurchHeader(
                         modifier = Modifier.size(42.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = HeaderNavy,
+                            containerColor = Color.White,
                         ),
-                    ) {
+                    ){
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                text = "✝",
-                                color = Color.White,
-                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                                fontWeight = FontWeight.Bold,
+                            Image(
+                                painter = painterResource(R.drawable.church_logo),
+                                contentDescription = "IUAFC church logo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(5.dp),
                             )
                         }
                     }
 
                     Text(
-                        text = "UIAFC",
+                        text = "IUAFC",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -312,13 +307,7 @@ private fun SharedChurchHeader(
             },
             actions = {
                 IconButton(
-                    onClick = {
-                        android.util.Log.d(
-                            "NotificationNavigation",
-                            "Shared header bell clicked"
-                        )
-                        onOpenNotifications()
-                    },
+                    onClick = onOpenNotifications,
                     modifier = Modifier.size(56.dp),
                 ) {
                     Icon(
@@ -353,7 +342,6 @@ private fun SharedChurchHeader(
     }
 }
 
-
 private fun initialsFor(fullName: String): String {
     val parts = fullName.trim()
         .split("\\s+".toRegex())
@@ -362,11 +350,16 @@ private fun initialsFor(fullName: String): String {
     return when {
         parts.size >= 2 ->
             "${parts.first().first()}${parts.last().first()}".uppercase()
+
         parts.size == 1 -> parts.first().take(2).uppercase()
-        else -> "PJ"
+        else -> "?"
     }
 }
 
+/**
+ * Registers a screen that only some roles can open; others see "Access denied".
+ * [adminOnly] restricts it further to Administrators (e.g. forms that change data).
+ */
 private fun <T : Any> NavGraphBuilder.roleScreen(
     user: UserProfile,
     destination: AppDestination,
@@ -391,12 +384,13 @@ private fun <T : Any> NavGraphBuilder.roleScreen(
     }
 }
 
+/** Switches bottom bar tabs without stacking them on top of each other. */
 private fun NavHostController.navigateToTab(route: Any) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) {
-            saveState = false
+            saveState = true
         }
         launchSingleTop = true
-        restoreState = false
+        restoreState = true
     }
 }

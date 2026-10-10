@@ -42,10 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
@@ -54,7 +56,7 @@ import com.app.iuafc.ui.components.ScreenScaffold
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private val DeleteRed = androidx.compose.ui.graphics.Color(0xFFD92D35)
+private val DeleteRed = Color(0xFFD92D35)
 
 @Composable
 fun AnnouncementsScreen(
@@ -62,9 +64,8 @@ fun AnnouncementsScreen(
     modifier: Modifier = Modifier,
 ) {
     val announcementViewModel: AnnouncementViewModel =
-        viewModel(factory = AnnouncementViewModel.factory())
+        viewModel(factory = AnnouncementViewModel.Factory)
 
-    // The ViewModel exposes uiState, not state.
     val uiState by announcementViewModel.uiState.collectAsState()
     val colors = MaterialTheme.colorScheme
 
@@ -72,9 +73,11 @@ fun AnnouncementsScreen(
         user.role == Role.ADMINISTRATOR || user.role == Role.PASTOR
 
     var showEditor by remember { mutableStateOf(false) }
+
     var editingAnnouncement by remember {
         mutableStateOf<Announcement?>(null)
     }
+
     var deletingAnnouncement by remember {
         mutableStateOf<Announcement?>(null)
     }
@@ -195,16 +198,12 @@ fun AnnouncementsScreen(
                 }
 
                 is UiState.Success<*> -> {
-                    // Explicitly check the success data type so Kotlin can
-                    // safely infer the announcement list.
                     val announcements =
-                        currentState.data as? List<*>
-                            ?: emptyList<Any>()
+                        (currentState.data as? List<*>)
+                            ?.filterIsInstance<Announcement>()
+                            .orEmpty()
 
-                    val typedAnnouncements =
-                        announcements.filterIsInstance<Announcement>()
-
-                    if (typedAnnouncements.isEmpty()) {
+                    if (announcements.isEmpty()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -230,12 +229,17 @@ fun AnnouncementsScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
                             items(
-                                items = typedAnnouncements,
+                                items = announcements,
                                 key = { it.id },
                             ) { announcement ->
+                                val authorName =
+                                    MockData.users.firstOrNull {
+                                        it.id == announcement.createdBy
+                                    }?.fullName ?: "Unknown"
+
                                 AnnouncementCard(
                                     announcement = announcement,
-                                    authorName = user.fullName,
+                                    authorName = authorName,
                                     canManage = canManageAnnouncements,
                                     onEdit = {
                                         editingAnnouncement = announcement
@@ -307,7 +311,9 @@ fun AnnouncementsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        announcementViewModel.deleteAnnouncement(announcement.id)
+                        announcementViewModel.deleteAnnouncement(
+                            announcement.id,
+                        )
                         deletingAnnouncement = null
                     },
                 ) {
@@ -450,7 +456,11 @@ private fun AnnouncementDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (isEditing) "Edit Announcement" else "New Announcement",
+                text = if (isEditing) {
+                    "Edit Announcement"
+                } else {
+                    "New Announcement"
+                },
                 fontSize = 23.sp,
                 lineHeight = 30.sp,
                 fontWeight = FontWeight.Bold,

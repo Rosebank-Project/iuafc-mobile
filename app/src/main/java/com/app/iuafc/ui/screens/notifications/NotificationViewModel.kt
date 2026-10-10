@@ -1,11 +1,12 @@
 package com.app.iuafc.ui.screens.notifications
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.AppNotification
 import com.app.iuafc.data.repository.NotificationRepository
-import com.app.iuafc.data.repository.MockNotificationRepository
 import com.app.iuafc.ui.common.UiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,21 +35,15 @@ class NotificationViewModel(
             _uiState.value = UiState.Loading
 
             try {
-                val notifications =
-                    repository.getNotifications()
+                val notifications = repository.getNotifications()
 
-                _uiState.value =
-                    UiState.Success(notifications)
-
+                _uiState.value = UiState.Success(notifications)
             } catch (e: CancellationException) {
                 throw e
-
             } catch (e: Exception) {
-                _uiState.value =
-                    UiState.Error(
-                        e.message
-                            ?: "Unable to load notifications.",
-                    )
+                _uiState.value = UiState.Error(
+                    e.message ?: "Unable to load notifications.",
+                )
             }
         }
     }
@@ -58,16 +53,12 @@ class NotificationViewModel(
             try {
                 repository.markAsRead(notificationId)
                 loadNotifications()
-
             } catch (e: CancellationException) {
                 throw e
-
             } catch (e: Exception) {
-                _uiState.value =
-                    UiState.Error(
-                        e.message
-                            ?: "Unable to update notification.",
-                    )
+                _uiState.value = UiState.Error(
+                    e.message ?: "Unable to update notification.",
+                )
             }
         }
     }
@@ -77,45 +68,23 @@ class NotificationViewModel(
             try {
                 repository.markAllAsRead()
                 loadNotifications()
-
             } catch (e: CancellationException) {
                 throw e
-
             } catch (e: Exception) {
-                _uiState.value =
-                    UiState.Error(
-                        e.message
-                            ?: "Unable to update notifications.",
-                    )
+                _uiState.value = UiState.Error(
+                    e.message ?: "Unable to update notifications.",
+                )
             }
         }
     }
 
     companion object {
-
-        fun factory(): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(
-                    modelClass: Class<T>,
-                ): T {
-
-                    if (
-                        modelClass.isAssignableFrom(
-                            NotificationViewModel::class.java,
-                        )
-                    ) {
-                        return NotificationViewModel(
-                            repository =
-                                MockNotificationRepository(),
-                        ) as T
-                    }
-
-                    throw IllegalArgumentException(
-                        "Unknown ViewModel class: ${modelClass.name}",
-                    )
-                }
+        val Factory = viewModelFactory {
+            initializer {
+                NotificationViewModel(
+                    repository = appContainer.notificationRepository,
+                )
             }
+        }
     }
 }
