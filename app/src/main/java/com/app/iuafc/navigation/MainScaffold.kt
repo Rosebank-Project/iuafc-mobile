@@ -117,13 +117,17 @@ fun MainScaffold(user: UserProfile, onSignOut: () -> Unit) {
                 )
             }
             roleScreen(user, AppDestination.MEMBERS, MemberFormRoute::class, adminOnly = true) { MemberFormScreen(back) }
-            roleScreen(user, AppDestination.MINISTRIES, MinistriesRoute::class) { MinistriesScreen(back) }
-            roleScreen(user, AppDestination.ACTIVITIES, ActivitiesRoute::class) { ActivitiesScreen(back) }
+            roleScreen(user, AppDestination.MINISTRIES, MinistriesRoute::class) {
+                MinistriesScreen(back, canManage = isAdmin)
+            }
+            roleScreen(user, AppDestination.ACTIVITIES, ActivitiesRoute::class) { ActivitiesScreen(back, user) }
             roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) { AttendanceScreen(back) }
             roleScreen(user, AppDestination.MY_ATTENDANCE, MyAttendanceRoute::class) { MyAttendanceScreen(back) }
-            roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) { DonationsScreen(back) }
+            roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) { DonationsScreen(back, user) }
             roleScreen(user, AppDestination.REPORTS, ReportsRoute::class) { ReportsScreen(back) }
-            roleScreen(user, AppDestination.SETTINGS, SettingsRoute::class) { SettingsScreen(back) }
+            roleScreen(user, AppDestination.SETTINGS, SettingsRoute::class) {
+                SettingsScreen(back, onOpenHelp = { navController.navigate(HelpRoute) })
+            }
             roleScreen(user, AppDestination.HELP, HelpRoute::class) { HelpScreen(back) }
         }
     }
