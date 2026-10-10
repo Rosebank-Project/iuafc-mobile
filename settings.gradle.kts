@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "iuafc-mobile"
+rootProject.name = "IUAFC"
 include(":app")
