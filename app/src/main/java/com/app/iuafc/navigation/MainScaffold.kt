@@ -248,6 +248,9 @@ fun MainScaffold(
                     user = user,
                     onBack = back,
                     onSignOut = onSignOut,
+                    onOpenHelp = {
+                        navController.navigate(HelpRoute)
+                    },
                 )
             }
 

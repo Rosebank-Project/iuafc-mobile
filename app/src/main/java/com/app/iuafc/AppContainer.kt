@@ -24,7 +24,6 @@ import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
-
 class AppContainer(
     private val context: android.content.Context,
     appScope: CoroutineScope,
@@ -40,15 +39,19 @@ class AppContainer(
             DemoSessionRepository()
         }
 
-    // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
+    // Mock until the members table is ready (#1).
     val memberRepository: MemberRepository =
         MockMemberRepository()
 
-    val dashboardRepository: DashboardRepository =
-        MockDashboardRepository()
-
+    // One shared repository for announcements throughout the app.
     val announcementRepository: AnnouncementRepository =
         MockAnnouncementRepository()
+
+    // The dashboard must use the same announcement repository.
+    val dashboardRepository: DashboardRepository =
+        MockDashboardRepository(
+            announcementRepository = announcementRepository,
+        )
 
     val notificationRepository: NotificationRepository =
         MockNotificationRepository()

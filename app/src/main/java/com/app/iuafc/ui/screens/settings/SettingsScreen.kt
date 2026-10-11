@@ -42,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,7 @@ fun SettingsScreen(
     user: UserProfile,
     onBack: () -> Unit,
     onSignOut: () -> Unit,
+    onOpenHelp: () -> Unit,
 ) {
     val viewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory {
@@ -74,6 +76,7 @@ fun SettingsScreen(
                 SettingsViewModel(
                     settingsRepository = container.settingsRepository,
                     sessionRepository = container.sessionRepository,
+                    userRepository = container.userRepository,
                 )
             }
         },
@@ -90,6 +93,15 @@ fun SettingsScreen(
 
     val profileMessage by
     viewModel.profileMessage.collectAsStateWithLifecycle()
+
+    val fullNameError by
+    viewModel.fullNameError.collectAsStateWithLifecycle()
+
+    val phoneError by
+    viewModel.phoneError.collectAsStateWithLifecycle()
+
+    val profileSaveSucceeded by
+    viewModel.profileSaveSucceeded.collectAsStateWithLifecycle()
 
     val passwordResetMessage by
     viewModel.passwordResetMessage.collectAsStateWithLifecycle()
@@ -140,15 +152,9 @@ fun SettingsScreen(
         }
     }
 
-    // Close the Edit Profile bubble only after
-    // the profile has actually been saved successfully.
-    LaunchedEffect(profileMessage) {
-        if (
-            profileMessage?.contains(
-                "successfully",
-                ignoreCase = true,
-            ) == true
-        ) {
+    // Close the editor only after a confirmed successful save.
+    LaunchedEffect(profileSaveSucceeded) {
+        if (profileSaveSucceeded) {
             showEditProfile = false
         }
     }
@@ -156,10 +162,7 @@ fun SettingsScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-
-        // =========================================================
         // MAIN SETTINGS CONTENT
-        // =========================================================
 
         Column(
             modifier = Modifier
@@ -168,11 +171,7 @@ fun SettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-
-            // -----------------------------------------------------
             // Header
-            // -----------------------------------------------------
-
 
             Row(
                 modifier = Modifier
@@ -191,9 +190,7 @@ fun SettingsScreen(
                         contentDescription = "Back",
                     )
 
-                    Spacer(
-                        modifier = Modifier.size(8.dp),
-                    )
+                    Spacer(Modifier.size(8.dp))
 
                     Text(
                         text = "Back",
@@ -203,9 +200,7 @@ fun SettingsScreen(
                 }
             }
 
-            // -----------------------------------------------------
             // Account
-            // -----------------------------------------------------
 
             Text(
                 text = "Account",
@@ -228,8 +223,7 @@ fun SettingsScreen(
                     Text(
                         text = "Name",
                         style = MaterialTheme.typography.labelMedium,
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Text(
@@ -238,15 +232,12 @@ fun SettingsScreen(
                         fontWeight = FontWeight.SemiBold,
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(4.dp),
-                    )
+                    Spacer(Modifier.height(4.dp))
 
                     Text(
                         text = "Email",
                         style = MaterialTheme.typography.labelMedium,
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Text(
@@ -254,15 +245,12 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyLarge,
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(4.dp),
-                    )
+                    Spacer(Modifier.height(4.dp))
 
                     Text(
                         text = "Role",
                         style = MaterialTheme.typography.labelMedium,
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Text(
@@ -270,14 +258,12 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyLarge,
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(8.dp),
-                    )
+                    Spacer(Modifier.height(8.dp))
 
                     OutlinedButton(
                         onClick = {
-                            showEditProfile = true
                             viewModel.clearProfileMessage()
+                            showEditProfile = true
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -286,18 +272,14 @@ fun SettingsScreen(
                             contentDescription = null,
                         )
 
-                        Spacer(
-                            modifier = Modifier.size(8.dp),
-                        )
+                        Spacer(Modifier.size(8.dp))
 
                         Text("Edit Profile")
                     }
                 }
             }
 
-            // -----------------------------------------------------
             // Notifications
-            // -----------------------------------------------------
 
             HorizontalDivider()
 
@@ -324,47 +306,36 @@ fun SettingsScreen(
                     Surface(
                         modifier = Modifier.size(44.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color =
-                            MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.primaryContainer,
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                        ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector =
-                                    Icons.Default.Notifications,
+                                imageVector = Icons.Default.Notifications,
                                 contentDescription = null,
-                                tint =
-                                    MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
 
-                    Spacer(
-                        modifier = Modifier.size(12.dp),
-                    )
+                    Spacer(Modifier.size(12.dp))
 
                     Column(
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(
                             text = "Push Notifications",
-                            style =
-                                MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
 
                         Text(
-                            text =
-                                if (notificationsEnabled) {
-                                    "Notifications are enabled."
-                                } else {
-                                    "Notifications are disabled."
-                                },
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            color =
-                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = if (notificationsEnabled) {
+                                "Notifications are enabled."
+                            } else {
+                                "Notifications are disabled."
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -377,9 +348,7 @@ fun SettingsScreen(
                 }
             }
 
-            // -----------------------------------------------------
             // Appearance
-            // -----------------------------------------------------
 
             HorizontalDivider()
 
@@ -406,50 +375,36 @@ fun SettingsScreen(
                     Surface(
                         modifier = Modifier.size(44.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color =
-                            MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.primaryContainer,
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                        ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Palette,
                                 contentDescription = null,
-                                tint =
-                                    MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
 
-                    Spacer(
-                        modifier = Modifier.size(12.dp),
-                    )
+                    Spacer(Modifier.size(12.dp))
 
                     Column(
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(
                             text = "Theme",
-                            style =
-                                MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
 
                         Text(
                             text = when (themePreference) {
-                                ThemePreference.SYSTEM ->
-                                    "System default"
-
-                                ThemePreference.LIGHT ->
-                                    "Light"
-
-                                ThemePreference.DARK ->
-                                    "Dark"
+                                ThemePreference.SYSTEM -> "System default"
+                                ThemePreference.LIGHT -> "Light"
+                                ThemePreference.DARK -> "Dark"
                             },
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            color =
-                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -464,9 +419,7 @@ fun SettingsScreen(
                 }
             }
 
-            // -----------------------------------------------------
             // Security
-            // -----------------------------------------------------
 
             HorizontalDivider()
 
@@ -494,40 +447,30 @@ fun SettingsScreen(
                         Surface(
                             modifier = Modifier.size(44.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color =
-                                MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.Lock,
                                     contentDescription = null,
-                                    tint =
-                                        MaterialTheme.colorScheme.primary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
 
-                        Spacer(
-                            modifier = Modifier.size(12.dp),
-                        )
+                        Spacer(Modifier.size(12.dp))
 
                         Text(
                             text = "Password",
-                            style =
-                                MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
                     }
 
                     Text(
-                        text =
-                            "Send a password reset email to your account.",
-                        style =
-                            MaterialTheme.typography.bodyMedium,
-                        color =
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = "Send a password reset email to your account.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     OutlinedButton(
@@ -542,27 +485,23 @@ fun SettingsScreen(
                     passwordResetMessage?.let { message ->
                         Text(
                             text = message,
-                            color =
-                                if (
-                                    message.contains(
-                                        "sent",
-                                        ignoreCase = true,
-                                    )
-                                ) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.error
-                                },
-                            style =
-                                MaterialTheme.typography.bodyMedium,
+                            color = if (
+                                message.contains(
+                                    "sent",
+                                    ignoreCase = true,
+                                )
+                            ) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
             }
 
-            // -----------------------------------------------------
-            // Help & About
-            // -----------------------------------------------------
+            // Help and About
 
             HorizontalDivider()
 
@@ -584,7 +523,6 @@ fun SettingsScreen(
                     modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -592,50 +530,37 @@ fun SettingsScreen(
                         Surface(
                             modifier = Modifier.size(44.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color =
-                                MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector =
-                                        Icons.Default.HelpOutline,
+                                    imageVector = Icons.Default.HelpOutline,
                                     contentDescription = null,
-                                    tint =
-                                        MaterialTheme.colorScheme.primary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
 
-                        Spacer(
-                            modifier = Modifier.size(12.dp),
-                        )
+                        Spacer(Modifier.size(12.dp))
 
                         Column(
                             modifier = Modifier.weight(1f),
                         ) {
                             Text(
                                 text = "Help & Support",
-                                style =
-                                    MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
 
                             Text(
-                                text =
-                                    "Get help using the IUAFC app.",
-                                style =
-                                    MaterialTheme.typography.bodyMedium,
-                                color =
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = "Get help using the IUAFC app.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
                         OutlinedButton(
-                            onClick = {
-                                showHelp = true
-                            },
+                            onClick = onOpenHelp,
                         ) {
                             Text("Help")
                         }
@@ -649,55 +574,42 @@ fun SettingsScreen(
                         Surface(
                             modifier = Modifier.size(44.dp),
                             shape = RoundedCornerShape(12.dp),
-                            color =
-                                MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                         ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.Info,
                                     contentDescription = null,
-                                    tint =
-                                        MaterialTheme.colorScheme.primary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
 
-                        Spacer(
-                            modifier = Modifier.size(12.dp),
-                        )
+                        Spacer(Modifier.size(12.dp))
 
                         Column {
                             Text(
                                 text = "IUAFC Mobile",
-                                style =
-                                    MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
 
                             Text(
-                                text =
-                                    "International United Apostolic Faith Church",
-                                style =
-                                    MaterialTheme.typography.bodyMedium,
+                                text = "International United Apostolic Faith Church",
+                                style = MaterialTheme.typography.bodyMedium,
                             )
 
                             Text(
                                 text = "Version 1.0",
-                                style =
-                                    MaterialTheme.typography.bodySmall,
-                                color =
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
             }
 
-            // -----------------------------------------------------
             // Sign Out
-            // -----------------------------------------------------
 
             Button(
                 onClick = {
@@ -711,24 +623,17 @@ fun SettingsScreen(
                     contentDescription = null,
                 )
 
-                Spacer(
-                    modifier = Modifier.size(8.dp),
-                )
+                Spacer(Modifier.size(8.dp))
 
                 Text("Sign Out")
             }
 
-            Spacer(
-                modifier = Modifier.height(20.dp),
-            )
+            Spacer(Modifier.height(20.dp))
         }
 
-        // =========================================================
         // EDIT PROFILE BUBBLE
-        // =========================================================
 
         if (showEditProfile) {
-
             SettingsOverlay(
                 onDismiss = {
                     showEditProfile = false
@@ -740,14 +645,16 @@ fun SettingsScreen(
                 phone = phone,
                 address = address,
                 profileMessage = profileMessage,
+                fullNameError = fullNameError,
+                phoneError = phoneError,
                 isLoading = isProfileLoading,
                 onFullNameChange = {
                     fullName = it
-                    viewModel.clearProfileMessage()
+                    viewModel.clearFullNameError()
                 },
                 onPhoneChange = {
                     phone = it
-                    viewModel.clearProfileMessage()
+                    viewModel.clearPhoneError()
                 },
                 onAddressChange = {
                     address = it
@@ -767,12 +674,9 @@ fun SettingsScreen(
             )
         }
 
-        // =========================================================
         // THEME BUBBLE
-        // =========================================================
 
         if (showThemeSelector) {
-
             SettingsOverlay(
                 onDismiss = {
                     showThemeSelector = false
@@ -792,12 +696,9 @@ fun SettingsScreen(
             )
         }
 
-        // =========================================================
         // HELP BUBBLE
-        // =========================================================
 
         if (showHelp) {
-
             SettingsOverlay(
                 onDismiss = {
                     showHelp = false
@@ -820,12 +721,8 @@ private fun SettingsOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Color.Black.copy(alpha = 0.35f),
-            )
-            .clickable(
-                onClick = onDismiss,
-            ),
+            .background(Color.Black.copy(alpha = 0.35f))
+            .clickable(onClick = onDismiss),
     )
 }
 
@@ -835,6 +732,8 @@ private fun EditProfileBubble(
     phone: String,
     address: String,
     profileMessage: String?,
+    fullNameError: String?,
+    phoneError: String?,
     isLoading: Boolean,
     onFullNameChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
@@ -857,8 +756,7 @@ private fun EditProfileBubble(
                 .verticalScroll(rememberScrollState()),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 12.dp,
@@ -868,7 +766,6 @@ private fun EditProfileBubble(
                 modifier = Modifier.padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -878,27 +775,22 @@ private fun EditProfileBubble(
                     ) {
                         Text(
                             text = "Edit Profile",
-                            style =
-                                MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                         )
 
-                        Spacer(
-                            modifier = Modifier.height(4.dp),
-                        )
+                        Spacer(Modifier.height(4.dp))
 
                         Text(
-                            text =
-                                "Update your personal information.",
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            color =
-                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = "Update your personal information.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
                     IconButton(
                         onClick = onClose,
+                        enabled = !isLoading,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -910,34 +802,40 @@ private fun EditProfileBubble(
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = onFullNameChange,
-                    label = {
-                        Text("Full Name")
-                    },
+                    label = { Text("Full Name") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = !isLoading,
+                    isError = fullNameError != null,
+                    supportingText = {
+                        fullNameError?.let {
+                            Text(it)
+                        }
+                    },
                 )
 
                 OutlinedTextField(
                     value = phone,
                     onValueChange = onPhoneChange,
-                    label = {
-                        Text("Phone Number")
-                    },
+                    label = { Text("Phone Number") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = !isLoading,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Phone,
                     ),
+                    isError = phoneError != null,
+                    supportingText = {
+                        phoneError?.let {
+                            Text(it)
+                        }
+                    },
                 )
 
                 OutlinedTextField(
                     value = address,
                     onValueChange = onAddressChange,
-                    label = {
-                        Text("Address")
-                    },
+                    label = { Text("Address") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     enabled = !isLoading,
@@ -946,19 +844,8 @@ private fun EditProfileBubble(
                 profileMessage?.let { message ->
                     Text(
                         text = message,
-                        color =
-                            if (
-                                message.contains(
-                                    "successfully",
-                                    ignoreCase = true,
-                                )
-                            ) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            },
-                        style =
-                            MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
 
@@ -968,7 +855,7 @@ private fun EditProfileBubble(
                     enabled = !isLoading,
                 ) {
                     Text(
-                        if (isLoading) {
+                        text = if (isLoading) {
                             "Saving..."
                         } else {
                             "Save Changes"
@@ -997,8 +884,7 @@ private fun ThemeBubble(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 12.dp,
@@ -1008,7 +894,6 @@ private fun ThemeBubble(
                 modifier = Modifier.padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1018,22 +903,16 @@ private fun ThemeBubble(
                     ) {
                         Text(
                             text = "Appearance",
-                            style =
-                                MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                         )
 
-                        Spacer(
-                            modifier = Modifier.height(4.dp),
-                        )
+                        Spacer(Modifier.height(4.dp))
 
                         Text(
-                            text =
-                                "Choose how the app should appear.",
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            color =
-                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = "Choose how the app should appear.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -1047,46 +926,32 @@ private fun ThemeBubble(
                     }
                 }
 
-                Spacer(
-                    modifier = Modifier.height(8.dp),
-                )
+                Spacer(Modifier.height(8.dp))
 
                 ThemeOption(
                     title = "System default",
-                    selected =
-                        selectedTheme ==
-                                ThemePreference.SYSTEM,
+                    selected = selectedTheme == ThemePreference.SYSTEM,
                     enabled = enabled,
                     onClick = {
-                        onThemeSelected(
-                            ThemePreference.SYSTEM,
-                        )
+                        onThemeSelected(ThemePreference.SYSTEM)
                     },
                 )
 
                 ThemeOption(
                     title = "Light",
-                    selected =
-                        selectedTheme ==
-                                ThemePreference.LIGHT,
+                    selected = selectedTheme == ThemePreference.LIGHT,
                     enabled = enabled,
                     onClick = {
-                        onThemeSelected(
-                            ThemePreference.LIGHT,
-                        )
+                        onThemeSelected(ThemePreference.LIGHT)
                     },
                 )
 
                 ThemeOption(
                     title = "Dark",
-                    selected =
-                        selectedTheme ==
-                                ThemePreference.DARK,
+                    selected = selectedTheme == ThemePreference.DARK,
                     enabled = enabled,
                     onClick = {
-                        onThemeSelected(
-                            ThemePreference.DARK,
-                        )
+                        onThemeSelected(ThemePreference.DARK)
                     },
                 )
             }
@@ -1108,8 +973,7 @@ private fun HelpBubble(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 12.dp,
@@ -1119,7 +983,6 @@ private fun HelpBubble(
                 modifier = Modifier.padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1129,22 +992,16 @@ private fun HelpBubble(
                     ) {
                         Text(
                             text = "Help & Support",
-                            style =
-                                MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                         )
 
-                        Spacer(
-                            modifier = Modifier.height(4.dp),
-                        )
+                        Spacer(Modifier.height(4.dp))
 
                         Text(
-                            text =
-                                "Need help using the IUAFC mobile application?",
-                            style =
-                                MaterialTheme.typography.bodyMedium,
-                            color =
-                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = "Need help using the IUAFC mobile application?",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -1161,37 +1018,29 @@ private fun HelpBubble(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    color =
-                        MaterialTheme.colorScheme.primaryContainer,
+                    color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
                             text = "Getting started",
-                            style =
-                                MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
 
                         Text(
-                            text =
-                                "Use the navigation menu to access church announcements, events, attendance, donations, ministries, and your account settings.",
-                            style =
-                                MaterialTheme.typography.bodyMedium,
+                            text = "Use the navigation menu to access church announcements, events, attendance, donations, ministries, and your account settings.",
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
 
                 Text(
-                    text =
-                        "For additional assistance, please contact your church administrator.",
-                    style =
-                        MaterialTheme.typography.bodyMedium,
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "For additional assistance, please contact your church administrator.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Button(
@@ -1215,12 +1064,11 @@ private fun ThemeOption(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color =
-            if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
     ) {
         Row(
             modifier = Modifier

@@ -34,18 +34,19 @@ class MockDashboardRepository(
 
         val today = LocalDate.now().toString()
 
-        // Keep all upcoming events for accurate summary counts.
+        // Count every upcoming event.
         val allUpcomingEvents = MockData.events
             .filter { it.date >= today }
             .sortedBy { it.date }
 
-        // Display only the first three upcoming events.
+        // Display only the first three events.
         val upcomingEvents = allUpcomingEvents.take(3)
 
-        // Use the announcement repository shared by the app.
-        val latestAnnouncements = announcementRepository
-            .getAnnouncements()
-            .take(3)
+        // Read the current announcements from the shared repository.
+        val allAnnouncements =
+            announcementRepository.getAnnouncements()
+
+        val latestAnnouncements = allAnnouncements.take(3)
 
         val totalDonations = MockData.donations
             .sumOf { it.amount }
@@ -66,7 +67,7 @@ class MockDashboardRepository(
                 ),
                 DashboardSummary(
                     label = "Announcements",
-                    value = MockData.announcements.size.toString(),
+                    value = allAnnouncements.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Total Donations",
@@ -108,7 +109,7 @@ class MockDashboardRepository(
                 ),
                 DashboardSummary(
                     label = "Announcements",
-                    value = MockData.announcements.size.toString(),
+                    value = allAnnouncements.size.toString(),
                 ),
             )
 
@@ -128,7 +129,7 @@ class MockDashboardRepository(
                     ),
                     DashboardSummary(
                         label = "Announcements",
-                        value = MockData.announcements.size.toString(),
+                        value = allAnnouncements.size.toString(),
                     ),
                     DashboardSummary(
                         label = "Ministries",
@@ -157,7 +158,7 @@ class MockDashboardRepository(
                     ),
                     DashboardSummary(
                         label = "Announcements",
-                        value = MockData.announcements.size.toString(),
+                        value = allAnnouncements.size.toString(),
                     ),
                     DashboardSummary(
                         label = "My Attendance",

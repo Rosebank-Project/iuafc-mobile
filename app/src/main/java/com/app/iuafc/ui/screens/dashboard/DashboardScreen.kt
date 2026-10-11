@@ -1,5 +1,9 @@
 package com.app.iuafc.ui.screens.dashboard
 
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,14 +25,12 @@ import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,6 +64,24 @@ fun DashboardScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        // Refresh when the Dashboard enters composition.
+        viewModel.load()
+
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.load()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     when (val state = uiState) {
         UiState.Loading -> {
@@ -124,6 +143,11 @@ private fun DashboardContent(
     onOpenAnnouncements: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Get the total announcement count from the repository summary.
+    val announcementCount = summaries.firstOrNull {
+        it.label.equals("Announcements", ignoreCase = true)
+    }?.value
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -134,7 +158,6 @@ private fun DashboardContent(
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-
         item {
             WelcomeSection(user = user)
         }
@@ -158,7 +181,9 @@ private fun DashboardContent(
 
         item {
             SectionHeader(
-                title = "Announcements",
+                title = announcementCount?.let {
+                    "Announcements ($it)"
+                } ?: "Announcements",
                 icon = Icons.Outlined.Campaign,
                 actionText = "All",
                 onActionClick = onOpenAnnouncements,
@@ -179,7 +204,6 @@ private fun DashboardContent(
         }
     }
 }
-
 
 @Composable
 private fun WelcomeSection(user: UserProfile) {
@@ -214,7 +238,9 @@ private fun WelcomeSection(user: UserProfile) {
 }
 
 @Composable
-private fun StatisticsSection(summaries: List<DashboardSummary>) {
+private fun StatisticsSection(
+    summaries: List<DashboardSummary>,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -250,7 +276,9 @@ private fun StatisticCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+        ),
     ) {
         Row(
             modifier = Modifier
@@ -258,7 +286,9 @@ private fun StatisticCard(
                 .padding(18.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     text = label.uppercase(Locale.getDefault()),
                     style = MaterialTheme.typography.labelMedium,
@@ -281,7 +311,9 @@ private fun StatisticCard(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (highlight) {
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                        MaterialTheme.colorScheme.secondary.copy(
+                            alpha = 0.15f,
+                        )
                     } else {
                         MaterialTheme.colorScheme.surfaceVariant.copy(
                             alpha = 0.65f,
@@ -349,7 +381,9 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun UpcomingEventsSection(events: List<Event>) {
+private fun UpcomingEventsSection(
+    events: List<Event>,
+) {
     if (events.isEmpty()) {
         EmptyMessage("No upcoming events scheduled.")
     } else {
@@ -363,12 +397,16 @@ private fun UpcomingEventsSection(events: List<Event>) {
                     shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(
                         1.dp,
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                        MaterialTheme.colorScheme.outline.copy(
+                            alpha = 0.18f,
+                        ),
                     ),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 0.dp,
+                    ),
                 ) {
                     Row(
                         modifier = Modifier
@@ -415,7 +453,9 @@ private fun UpcomingEventsSection(events: List<Event>) {
 }
 
 @Composable
-private fun AnnouncementCard(announcement: Announcement) {
+private fun AnnouncementCard(
+    announcement: Announcement,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -426,9 +466,13 @@ private fun AnnouncementCard(announcement: Announcement) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+        ),
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+        ) {
             Text(
                 text = announcement.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -467,7 +511,9 @@ private fun EmptyMessage(message: String) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+        ),
     ) {
         Text(
             text = message,
@@ -478,7 +524,9 @@ private fun EmptyMessage(message: String) {
     }
 }
 
-private fun statisticIconFor(label: String): ImageVector {
+private fun statisticIconFor(
+    label: String,
+): ImageVector {
     return when {
         label.contains("Member", ignoreCase = true) ->
             Icons.Outlined.Groups
@@ -495,12 +543,17 @@ private fun statisticIconFor(label: String): ImageVector {
         label.contains("Attendance", ignoreCase = true) ->
             Icons.Outlined.Groups
 
+        label.contains("Announcement", ignoreCase = true) ->
+            Icons.Outlined.Campaign
+
         else ->
             Icons.Outlined.Event
     }
 }
 
-private fun initialsFor(fullName: String): String {
+private fun initialsFor(
+    fullName: String,
+): String {
     val parts = fullName.trim()
         .split("\\s+".toRegex())
         .filter { it.isNotBlank() }
@@ -516,7 +569,9 @@ private fun initialsFor(fullName: String): String {
     }
 }
 
-private fun formatDate(value: String): String {
+private fun formatDate(
+    value: String,
+): String {
     return try {
         LocalDate.parse(value).format(
             DateTimeFormatter.ofPattern(
