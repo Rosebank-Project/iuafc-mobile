@@ -1,3 +1,4 @@
+
 package com.app.iuafc.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +31,7 @@ fun ScreenScaffold(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    showTopBar: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
@@ -38,17 +40,22 @@ fun ScreenScaffold(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+            if (showTopBar) {
+                TopAppBar(
+                    title = { Text(title) },
+                    navigationIcon = {
+                        if (onBack != null) {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                    contentDescription = "Back",
+                                )
+                            }
                         }
-                    }
-                },
-                actions = actions,
-            )
+                    },
+                    actions = actions,
+                )
+            }
         },
         floatingActionButton = floatingActionButton,
         snackbarHost = snackbarHost,

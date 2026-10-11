@@ -118,3 +118,21 @@ data class MinistryActivity(
     @SerialName("reviewed_at") val reviewedAt: String? = null,
     @SerialName("review_note") val reviewNote: String? = null,
 )
+
+
+@Serializable
+enum class NotificationType {
+    Announcement,
+    Event,
+    ActivityApproval,
+}
+
+@Serializable
+data class AppNotification(
+    val id: String,
+    val type: NotificationType,
+    val title: String,
+    val message: String,
+    val timestamp: String,
+    val isRead: Boolean = false,
+)
