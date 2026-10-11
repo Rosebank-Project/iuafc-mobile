@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.repository.AnnouncementRepository
+import com.app.iuafc.data.repository.UserRepository
 import com.app.iuafc.ui.common.UiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class AnnouncementViewModel(
     private val repository: AnnouncementRepository,
+    private val userRepository: UserRepository? = null,
 ) : ViewModel() {
 
     private val _uiState =
@@ -25,8 +27,14 @@ class AnnouncementViewModel(
     val uiState: StateFlow<UiState<List<Announcement>>> =
         _uiState.asStateFlow()
 
+    private val _authors = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    val authors: StateFlow<Map<String, String>> =
+        _authors.asStateFlow()
+
     init {
         loadAnnouncements()
+        loadAuthors()
     }
 
     fun loadAnnouncements() {
@@ -43,6 +51,24 @@ class AnnouncementViewModel(
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to load announcements.",
                 )
+            }
+        }
+    }
+
+    private fun loadAuthors() {
+        val usersRepository = userRepository ?: return
+
+        viewModelScope.launch {
+            try {
+                _authors.value = usersRepository.getUsers()
+                    .associate { user ->
+                        user.id to user.fullName
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // The screen can still display the signed-in user's name.
+                // Unknown authors will use the "Church office" fallback.
             }
         }
     }
@@ -109,12 +135,13 @@ class AnnouncementViewModel(
     companion object {
 
         /**
-         * Creates the ViewModel with the application's shared repository.
+         * Creates the ViewModel with the application's shared repositories.
          */
         val Factory = viewModelFactory {
             initializer {
                 AnnouncementViewModel(
                     repository = appContainer.announcementRepository,
+                    userRepository = appContainer.userRepository,
                 )
             }
         }

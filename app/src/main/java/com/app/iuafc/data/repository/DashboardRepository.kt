@@ -89,6 +89,10 @@ class MockDashboardRepository(
                     value = allUpcomingEvents.size.toString(),
                 ),
                 DashboardSummary(
+                    label = "Announcements",
+                    value = allAnnouncements.size.toString(),
+                ),
+                DashboardSummary(
                     label = "Total Donations",
                     value = formattedDonations,
                 ),

@@ -1,4 +1,3 @@
-
 package com.app.iuafc.data.repository
 
 import com.app.iuafc.data.model.Role
@@ -44,12 +43,6 @@ class SupabaseSessionRepository(
     override val state: StateFlow<SessionState> =
         _state.asStateFlow()
 
-    /*
-     * Retains a successfully saved name if an authentication status event
-     * causes the profile to be loaded again before the next app session.
-     */
-    private val profileNameOverrides = mutableMapOf<String, String>()
-
     init {
         scope.launch {
             supabase.auth.sessionStatus.collect { status ->
@@ -58,11 +51,9 @@ class SupabaseSessionRepository(
                         (
                                 status.session.user
                                     ?: supabase.auth.currentUserOrNull()
-                                )
-                            ?.let {
+                                )?.let {
                                 SessionState.SignedIn(loadProfile(it))
-                            }
-                            ?: SessionState.SignedOut
+                            } ?: SessionState.SignedOut
 
                     is SessionStatus.Initializing ->
                         SessionState.Loading
@@ -76,8 +67,7 @@ class SupabaseSessionRepository(
                         supabase.auth.currentUserOrNull()
                             ?.let {
                                 SessionState.SignedIn(loadProfile(it))
-                            }
-                            ?: SessionState.SignedOut
+                            } ?: SessionState.SignedOut
                 }
             }
         }
@@ -95,8 +85,6 @@ class SupabaseSessionRepository(
             _state.value as? SessionState.SignedIn ?: return
 
         if (current.user.id != userId) return
-
-        profileNameOverrides[userId] = cleanedName
 
         _state.value = SessionState.SignedIn(
             current.user.copy(
@@ -173,7 +161,7 @@ class SupabaseSessionRepository(
     }
 
     /**
-     * Reads the user's role from the `profiles` table.
+     * Reads the user's role from the profiles table.
      *
      * If the profile cannot be read (for example, while offline),
      * the user is treated as a Church Member.
@@ -192,7 +180,7 @@ class SupabaseSessionRepository(
             role = Role.CHURCH_MEMBER,
         )
 
-        val profile = try {
+        return try {
             supabase.from("profiles")
                 .select(SupabaseUserRepository.PROFILE_COLUMNS) {
                     filter {
@@ -205,14 +193,6 @@ class SupabaseSessionRepository(
             throw e
         } catch (_: Exception) {
             fallback
-        }
-
-        val overrideName = profileNameOverrides[user.id]
-
-        return if (overrideName != null) {
-            profile.copy(fullName = overrideName)
-        } else {
-            profile
         }
     }
 

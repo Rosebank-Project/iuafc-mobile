@@ -95,7 +95,11 @@ fun MainScaffold(
 
     fun openNotifications() {
         navController.navigate(NotificationsRoute) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
             launchSingleTop = true
+            restoreState = true
         }
     }
 

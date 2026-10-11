@@ -47,7 +47,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
@@ -67,6 +66,7 @@ fun AnnouncementsScreen(
         viewModel(factory = AnnouncementViewModel.Factory)
 
     val uiState by announcementViewModel.uiState.collectAsState()
+    val authors by announcementViewModel.authors.collectAsState()
     val colors = MaterialTheme.colorScheme
 
     val canManageAnnouncements =
@@ -232,10 +232,15 @@ fun AnnouncementsScreen(
                                 items = announcements,
                                 key = { it.id },
                             ) { announcement ->
-                                val authorName =
-                                    MockData.users.firstOrNull {
-                                        it.id == announcement.createdBy
-                                    }?.fullName ?: "Unknown"
+                                val authorName = when {
+                                    announcement.createdBy == user.id ->
+                                        user.fullName.ifBlank { "Church office" }
+
+                                    else ->
+                                        authors[announcement.createdBy]
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: "Church office"
+                                }
 
                                 AnnouncementCard(
                                     announcement = announcement,
@@ -449,6 +454,10 @@ private fun AnnouncementDialog(
         mutableStateOf(announcement?.message.orEmpty())
     }
 
+    var titleWasSubmitted by remember(announcement) {
+        mutableStateOf(false)
+    }
+
     val isEditing = announcement != null
     val canSave = title.isNotBlank() && message.isNotBlank()
 
@@ -472,7 +481,10 @@ private fun AnnouncementDialog(
             ) {
                 OutlinedTextField(
                     value = title,
-                    onValueChange = { title = it },
+                    onValueChange = {
+                        title = it
+                        titleWasSubmitted = false
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     label = {
                         Text(
@@ -485,6 +497,12 @@ private fun AnnouncementDialog(
                         lineHeight = 25.sp,
                     ),
                     singleLine = true,
+                    isError = titleWasSubmitted && title.isBlank(),
+                    supportingText = {
+                        if (titleWasSubmitted && title.isBlank()) {
+                            Text("Title is required")
+                        }
+                    },
                 )
 
                 OutlinedTextField(
@@ -507,9 +525,12 @@ private fun AnnouncementDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = canSave,
                 onClick = {
-                    onSave(title.trim(), message.trim())
+                    titleWasSubmitted = true
+
+                    if (canSave) {
+                        onSave(title.trim(), message.trim())
+                    }
                 },
             ) {
                 Text(

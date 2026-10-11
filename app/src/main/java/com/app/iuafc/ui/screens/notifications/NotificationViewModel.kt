@@ -32,11 +32,8 @@ class NotificationViewModel(
 
     fun loadNotifications() {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
-
             try {
                 val notifications = repository.getNotifications()
-
                 _uiState.value = UiState.Success(notifications)
             } catch (e: CancellationException) {
                 throw e
