@@ -35,6 +35,18 @@ class MockChurchFeaturesRepositoryTest {
     }
 
     @Test
+    fun memberRepository_sharesMinistriesWithChurchFeaturesRepository() = runBlocking {
+        val memberRepo = MockMemberRepository(delayMillis = 0, churchFeaturesRepository = repository)
+        val initialCount = memberRepo.getMinistries().size
+
+        repository.saveMinistry(Ministry("", "Hospitality Ministry", "Welcomes guests"))
+        val updatedMinistries = memberRepo.getMinistries()
+
+        assertEquals(initialCount + 1, updatedMinistries.size)
+        assertTrue(updatedMinistries.any { it.name == "Hospitality Ministry" })
+    }
+
+    @Test
     fun saveActivity_assignsId_andReviewUpdatesStatusAndNote() = runBlocking {
         val proposal = MinistryActivity(
             id = "",

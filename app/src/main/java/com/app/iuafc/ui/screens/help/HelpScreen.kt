@@ -31,7 +31,7 @@ private data class HelpArticle(val section: String, val question: String, val an
 
 private val helpArticles = listOf(
     HelpArticle("Getting started", "How do I register?", "Choose Register on the sign-in screen and enter the requested account details. If registration is unavailable, ask a church Administrator to help set up your account."),
-    HelpArticle("Getting started", "How do I log in?", "Enter the email address and password associated with your account on the sign-in screen. You can use Forgot password to request a reset."),
+    HelpArticle("Getting started", "How do I log in?", "Enter the email address and password associated with your account on the sign-in screen, or tap 'Continue with Google' to sign in with Google SSO. You can also use 'Forgot password' to request a reset."),
     HelpArticle("Getting started", "Why can’t I see a feature?", "Available screens depend on your church role. Ask an Administrator if you believe your account has the wrong role or ministry assignment."),
     HelpArticle("Dashboard", "What is on the dashboard?", "The dashboard is your starting point for church updates and shortcuts to the features available to your account."),
     HelpArticle("Events and announcements", "How do I find an event?", "Open Events to browse church events and their dates, times and venues. Open Announcements to read notices from church leadership."),
@@ -109,7 +109,7 @@ fun HelpScreen(
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Need more help?", style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    "For account access, incorrect records or feature support, contact your church Administrator or Pastor.",
+                                    "For account access, incorrect records or feature support, contact your church Administrator or Pastor at support@iuafc.org or 011 234 5678.",
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }

@@ -45,7 +45,8 @@ import com.app.iuafc.ui.components.EmptyState
 import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.LoadingState
 import com.app.iuafc.ui.components.ScreenScaffold
-import com.app.iuafc.ui.screens.features.DonationsViewModel
+import com.app.iuafc.ui.components.toDisplayDate
+import com.app.iuafc.ui.screens.donations.DonationsViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -80,6 +81,7 @@ fun DonationsScreen(
             if (viewModel.canRecord) {
                 ExtendedFloatingActionButton(
                     onClick = {
+                        viewModel.clearError()
                         saveVersionOnOpen = state.saveVersion
                         showForm = true
                     },
@@ -101,8 +103,10 @@ fun DonationsScreen(
             else -> {
                 val donations = state.donations.sortedByDescending { it.donationDate }
                 Column(Modifier.padding(padding).fillMaxSize()) {
-                    state.errorMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    if (!showForm) {
+                        state.errorMessage?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                        }
                     }
                     Text(
                         "${donations.size} donations | ${formatRand(donations.sumOf { it.amount })}",
@@ -130,7 +134,10 @@ fun DonationsScreen(
             members = state.members,
             saving = state.isSaving,
             errorMessage = state.errorMessage,
-            onDismiss = { showForm = false },
+            onDismiss = {
+                showForm = false
+                viewModel.clearError()
+            },
             onRecord = viewModel::record,
         )
     }
@@ -141,7 +148,7 @@ private fun DonationCard(donation: Donation, memberName: String?) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(formatRand(donation.amount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text("${donation.donationType.name} · ${donation.donationDate} · ${donation.paymentMethod.name}")
+            Text("${donation.donationType.name} · ${donation.donationDate.toDisplayDate()} · ${donation.paymentMethod.name}")
             if (memberName != null) {
                 Text("Member: $memberName", style = MaterialTheme.typography.bodySmall)
             }
@@ -212,7 +219,7 @@ private fun DonationForm(
                     enabled = !saving,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                DateField(date, { date = it }, "Donation date", modifier = Modifier.fillMaxWidth(), enabled = !saving)
+                DateField(date, { date = it }, "Donation date", allowFuture = false, modifier = Modifier.fillMaxWidth(), enabled = !saving)
                 errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         },

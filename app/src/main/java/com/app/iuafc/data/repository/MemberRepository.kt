@@ -20,7 +20,10 @@ interface MemberRepository {
  * In-memory version using [MockData] until the `members` table exists (#1).
  * Changes last until the app is closed. [delayMillis] simulates the network.
  */
-class MockMemberRepository(private val delayMillis: Long = 400) : MemberRepository {
+class MockMemberRepository(
+    private val delayMillis: Long = 400,
+    private val churchFeaturesRepository: ChurchFeaturesRepository? = null,
+) : MemberRepository {
 
     private val members = MockData.members.toMutableList()
     private var nextId = members.size + 1
@@ -35,7 +38,8 @@ class MockMemberRepository(private val delayMillis: Long = 400) : MemberReposito
         return members.firstOrNull { it.id == id }
     }
 
-    override suspend fun getMinistries(): List<Ministry> = MockData.ministries
+    override suspend fun getMinistries(): List<Ministry> =
+        churchFeaturesRepository?.getMinistries() ?: MockData.ministries
 
     override suspend fun saveMember(member: Member): SaveResult {
         delay(delayMillis)

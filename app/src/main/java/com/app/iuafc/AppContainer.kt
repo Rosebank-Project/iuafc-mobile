@@ -30,8 +30,8 @@ class AppContainer(appScope: CoroutineScope) {
         else DemoSessionRepository()
 
     // Mock until the `members` table is ready (#1). Swap for the Supabase version then.
-    val memberRepository: MemberRepository = MockMemberRepository()
     val churchFeaturesRepository: ChurchFeaturesRepository = MockChurchFeaturesRepository()
+    val memberRepository: MemberRepository = MockMemberRepository(churchFeaturesRepository = churchFeaturesRepository)
     val userRepository: UserRepository =
         if (SupabaseProvider.isConfigured) SupabaseUserRepository(SupabaseProvider.client)
         else MockUserRepository()

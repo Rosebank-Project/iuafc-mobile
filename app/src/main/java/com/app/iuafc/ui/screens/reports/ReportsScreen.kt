@@ -26,7 +26,7 @@ import com.app.iuafc.data.model.Gender
 import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.LoadingState
 import com.app.iuafc.ui.components.ScreenScaffold
-import com.app.iuafc.ui.screens.features.ReportsViewModel
+import com.app.iuafc.ui.screens.reports.ReportsViewModel
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter

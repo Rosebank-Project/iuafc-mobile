@@ -22,8 +22,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.app.iuafc.ui.components.toDisplayDate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,7 +49,7 @@ import com.app.iuafc.ui.components.EmptyState
 import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.LoadingState
 import com.app.iuafc.ui.components.ScreenScaffold
-import com.app.iuafc.ui.screens.features.ActivitiesViewModel
+import com.app.iuafc.ui.screens.activities.ActivitiesViewModel
 
 /** Ministry leaders submit activities; Administrators and Pastors review them. */
 @Composable
@@ -81,6 +83,7 @@ fun ActivitiesScreen(
             if (viewModel.canSubmit) {
                 ExtendedFloatingActionButton(
                     onClick = {
+                        viewModel.clearError()
                         saveVersionOnOpen = state.saveVersion
                         showForm = true
                     },
@@ -95,10 +98,13 @@ fun ActivitiesScreen(
             state.errorMessage != null && state.activities.isEmpty() ->
                 ErrorState(state.errorMessage!!, Modifier.padding(padding), onRetry = viewModel::load)
             else -> {
-                val visible = viewModel.visibleActivities().filter { filter == null || it.status == filter }
+                val userActivities = viewModel.visibleActivities()
+                val visible = userActivities.filter { filter == null || it.status == filter }
                 Column(Modifier.padding(padding).fillMaxSize()) {
-                    state.errorMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    if (!showForm && reviewing == null) {
+                        state.errorMessage?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                        }
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -115,8 +121,10 @@ fun ActivitiesScreen(
                     }
                     if (visible.isEmpty()) {
                         EmptyState(
-                            title = if (state.activities.isEmpty()) "No activities yet" else "No activities in this status",
-                            message = if (viewModel.canSubmit) "Propose an activity for your ministry." else null,
+                            title = if (userActivities.isEmpty()) "No activities yet" else "No activities in this status",
+                            message = if (userActivities.isEmpty() && viewModel.canSubmit) "Propose an activity for your ministry."
+                                      else if (filter != null) "Try selecting another status."
+                                      else null,
                         )
                     } else {
                         LazyColumn(
@@ -148,7 +156,10 @@ fun ActivitiesScreen(
             initialMinistryId = user.ministryId,
             isSaving = state.isSaving,
             errorMessage = state.errorMessage,
-            onDismiss = { showForm = false },
+            onDismiss = {
+                showForm = false
+                viewModel.clearError()
+            },
             onSubmit = viewModel::submit,
         )
     }
@@ -157,7 +168,10 @@ fun ActivitiesScreen(
             activity = activity,
             isSaving = state.isSaving,
             errorMessage = state.errorMessage,
-            onDismiss = { reviewing = null },
+            onDismiss = {
+                reviewing = null
+                viewModel.clearError()
+            },
             onReview = { status, note -> viewModel.review(activity, status, note) },
         )
     }
@@ -174,17 +188,20 @@ private fun ActivityCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(activity.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    activity.status.name,
-                    color = when (activity.status) {
-                        ActivityStatus.Approved -> MaterialTheme.colorScheme.primary
-                        ActivityStatus.Rejected -> MaterialTheme.colorScheme.error
-                        ActivityStatus.Pending -> MaterialTheme.colorScheme.tertiary
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                )
+                val (badgeContainer, badgeContent) = when (activity.status) {
+                    ActivityStatus.Approved -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                    ActivityStatus.Rejected -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+                    ActivityStatus.Pending -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+                }
+                Surface(color = badgeContainer, contentColor = badgeContent, shape = MaterialTheme.shapes.extraSmall) {
+                    Text(
+                        activity.status.name,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
             }
-            Text("$ministryName | ${activity.proposedDate} | ${activity.venue}", style = MaterialTheme.typography.bodySmall)
+            Text("$ministryName | ${activity.proposedDate.toDisplayDate()} | ${activity.venue}", style = MaterialTheme.typography.bodySmall)
             Text(activity.description, style = MaterialTheme.typography.bodyMedium)
             activity.reviewNote?.let {
                 Text("Review note: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -205,7 +222,14 @@ private fun ActivityForm(
     onDismiss: () -> Unit,
     onSubmit: (String, String, String, String, String) -> Unit,
 ) {
-    var ministryId by remember { mutableStateOf(initialMinistryId.orEmpty()) }
+    val availableMinistries = remember(ministries, initialMinistryId) {
+        if (!initialMinistryId.isNullOrBlank()) {
+            ministries.filter { it.id == initialMinistryId }
+        } else {
+            ministries
+        }
+    }
+    var ministryId by remember { mutableStateOf(availableMinistries.firstOrNull()?.id.orEmpty()) }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -220,12 +244,12 @@ private fun ActivityForm(
             ) {
                 DropdownField(
                     label = "Ministry",
-                    options = ministries,
-                    selected = ministries.firstOrNull { it.id == ministryId },
+                    options = availableMinistries,
+                    selected = availableMinistries.firstOrNull { it.id == ministryId },
                     onSelected = { ministryId = it.id },
                     optionLabel = { it.name },
                     placeholder = "Choose a ministry",
-                    enabled = !isSaving,
+                    enabled = !isSaving && availableMinistries.size > 1,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -236,7 +260,7 @@ private fun ActivityForm(
                     description, { description = it }, label = { Text("Description") },
                     minLines = 2, enabled = !isSaving, modifier = Modifier.fillMaxWidth(),
                 )
-                DateField(date, { date = it }, "Proposed date", modifier = Modifier.fillMaxWidth(), enabled = !isSaving)
+                DateField(date, { date = it }, "Proposed date", allowPast = false, modifier = Modifier.fillMaxWidth(), enabled = !isSaving)
                 OutlinedTextField(
                     venue, { venue = it }, label = { Text("Venue") }, singleLine = true,
                     enabled = !isSaving, modifier = Modifier.fillMaxWidth(),

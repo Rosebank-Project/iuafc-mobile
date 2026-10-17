@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Ministry
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
@@ -40,7 +39,7 @@ import com.app.iuafc.ui.components.EmptyState
 import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.LoadingState
 import com.app.iuafc.ui.components.ScreenScaffold
-import com.app.iuafc.ui.screens.features.MinistriesViewModel
+import com.app.iuafc.ui.screens.ministries.MinistriesViewModel
 
 /** Ministry directory. Administrators can create and edit entries. */
 @Composable
@@ -67,6 +66,7 @@ fun MinistriesScreen(
             if (canManage) {
                 ExtendedFloatingActionButton(
                     onClick = {
+                        viewModel.clearError()
                         editing = null
                         saveVersionOnOpen = state.saveVersion
                         showEditor = true
@@ -87,8 +87,10 @@ fun MinistriesScreen(
                 modifier = Modifier.padding(padding),
             )
             else -> Column(Modifier.padding(padding).fillMaxSize()) {
-                state.errorMessage?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                if (!showEditor) {
+                    state.errorMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    }
                 }
                 Text(
                     "${state.ministries.size} ministries",
@@ -101,13 +103,18 @@ fun MinistriesScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.ministries, key = { it.id }) { ministry ->
-                        MinistryCard(ministry, if (canManage) {
-                            {
-                                editing = ministry
-                                saveVersionOnOpen = state.saveVersion
-                                showEditor = true
-                            }
-                        } else null)
+                        MinistryCard(
+                            ministry = ministry,
+                            users = state.users,
+                            onEdit = if (canManage) {
+                                {
+                                    viewModel.clearError()
+                                    editing = ministry
+                                    saveVersionOnOpen = state.saveVersion
+                                    showEditor = true
+                                }
+                            } else null,
+                        )
                     }
                 }
             }
@@ -117,16 +124,20 @@ fun MinistriesScreen(
     if (showEditor) {
         MinistryEditor(
             ministry = editing,
+            users = state.users,
             saving = state.isSaving,
             errorMessage = state.errorMessage,
-            onDismiss = { showEditor = false },
+            onDismiss = {
+                showEditor = false
+                viewModel.clearError()
+            },
             onSave = viewModel::save,
         )
     }
 }
 
 @Composable
-private fun MinistryCard(ministry: Ministry, onEdit: (() -> Unit)?) {
+private fun MinistryCard(ministry: Ministry, users: List<UserProfile>, onEdit: (() -> Unit)?) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(16.dp),
@@ -134,7 +145,7 @@ private fun MinistryCard(ministry: Ministry, onEdit: (() -> Unit)?) {
         ) {
             Text(ministry.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(ministry.description.ifBlank { "No description provided." }, style = MaterialTheme.typography.bodyMedium)
-            val leaderName = MockData.users.firstOrNull { it.id == ministry.leaderId }?.fullName
+            val leaderName = users.firstOrNull { it.id == ministry.leaderId }?.fullName
             Text(
                 "Leader: ${leaderName ?: "Not assigned"}",
                 style = MaterialTheme.typography.labelMedium,
@@ -150,6 +161,7 @@ private fun MinistryCard(ministry: Ministry, onEdit: (() -> Unit)?) {
 @Composable
 private fun MinistryEditor(
     ministry: Ministry?,
+    users: List<UserProfile>,
     saving: Boolean,
     errorMessage: String?,
     onDismiss: () -> Unit,
@@ -158,7 +170,7 @@ private fun MinistryEditor(
     var name by remember(ministry?.id) { mutableStateOf(ministry?.name.orEmpty()) }
     var description by remember(ministry?.id) { mutableStateOf(ministry?.description.orEmpty()) }
     var leaderId by remember(ministry?.id) { mutableStateOf(ministry?.leaderId) }
-    val leaders = remember { MockData.users.filter { it.role == Role.MINISTRY_LEADER } }
+    val leaders = remember(users) { users.filter { it.role == Role.MINISTRY_LEADER } }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (ministry == null) "Add ministry" else "Edit ministry") },
