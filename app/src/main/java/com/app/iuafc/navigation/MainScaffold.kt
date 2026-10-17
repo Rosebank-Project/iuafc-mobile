@@ -224,11 +224,11 @@ fun MainScaffold(
             }
 
             roleScreen(user, AppDestination.MINISTRIES, MinistriesRoute::class) {
-                MinistriesScreen(back)
+                MinistriesScreen(back, canManage = isAdmin)
             }
 
             roleScreen(user, AppDestination.ACTIVITIES, ActivitiesRoute::class) {
-                ActivitiesScreen(back)
+                ActivitiesScreen(back, user)
             }
 
             roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) {
@@ -240,7 +240,7 @@ fun MainScaffold(
             }
 
             roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) {
-                DonationsScreen(back)
+                DonationsScreen(back, user)
             }
 
             roleScreen(user, AppDestination.REPORTS, ReportsRoute::class) {
