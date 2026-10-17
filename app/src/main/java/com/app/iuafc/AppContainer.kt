@@ -6,10 +6,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.app.iuafc.data.remote.SupabaseProvider
 import com.app.iuafc.data.repository.AnnouncementRepository
+import com.app.iuafc.data.repository.ChurchFeaturesRepository
 import com.app.iuafc.data.repository.DashboardRepository
 import com.app.iuafc.data.repository.DemoSessionRepository
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.MockAnnouncementRepository
+import com.app.iuafc.data.repository.MockChurchFeaturesRepository
 import com.app.iuafc.data.repository.MockDashboardRepository
 import com.app.iuafc.data.repository.MockMemberRepository
 import com.app.iuafc.data.repository.MockNotificationRepository
@@ -39,8 +41,13 @@ class AppContainer(
             DemoSessionRepository()
         }
 
+    // Ministries, activities and donations (Avuzwa's screens).
+    val churchFeaturesRepository: ChurchFeaturesRepository =
+        MockChurchFeaturesRepository()
+
+    // Reads ministries from churchFeaturesRepository so new ministries show up in Members.
     val memberRepository: MemberRepository =
-        MockMemberRepository()
+        MockMemberRepository(churchFeaturesRepository = churchFeaturesRepository)
 
     // Shared announcement repository for the entire app.
     val announcementRepository: AnnouncementRepository =
