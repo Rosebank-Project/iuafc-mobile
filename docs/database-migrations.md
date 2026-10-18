@@ -16,9 +16,11 @@ Supabase keeps the list of applied migrations in `supabase_migrations.schema_mig
    The timestamp is `YYYYMMDDHHMMSS` and sets the order:
 
    ```
-   supabase/migrations/20261002120000_profiles.sql     ← already there
-   supabase/migrations/20261005090000_schema.sql       ← tables (#1)
-   supabase/migrations/20261005100000_seed.sql         ← at least 10 records per table (#2)
+   supabase/migrations/20261002120000_profiles.sql
+   supabase/migrations/20261003120000_core_tables.sql
+   …
+   supabase/migrations/20261018170000_seed_data.sql
+   supabase/migrations/<today's date and time>_<description>.sql   ← your new file
    ```
 
    With the Supabase CLI you can create it with `npx supabase migration new schema`.
@@ -33,6 +35,8 @@ Supabase keeps the list of applied migrations in `supabase_migrations.schema_mig
 
 ## Rules
 
+- **The timestamp must be later than the last migration on `main`.** Supabase refuses a file dated
+  before a migration that already ran, so use today's date and time, not the date of the older files.
 - **Never edit a migration that is already on `main`** – it will not run again. Create a new
   migration to change something (e.g. `ALTER TABLE ...`).
 - Seed data is a normal migration too (`supabase/seed.sql` is only used for local databases).
