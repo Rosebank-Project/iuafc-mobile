@@ -1,4 +1,3 @@
-
 package com.app.iuafc.ui.screens.attendance
 
 import androidx.compose.foundation.layout.Arrangement
@@ -40,13 +39,19 @@ import java.util.Locale
 
 @Composable
 fun AttendanceScreen(
+    onBack: () -> Unit, // <-- ADDED BACK BUTTON
     modifier: Modifier = Modifier,
     viewModel: AttendanceViewModel = viewModel()
 ) {
     val attendanceList by viewModel.attendanceList.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    ScreenScaffold(title = "Attendance", modifier = modifier) { padding ->
+    ScreenScaffold(
+        title = "Attendance",
+        modifier = modifier,
+        onBack = onBack // <-- PASSED TO SCAFFOLD
+    ) { padding ->
+        // ... (rest of the UI stays exactly the same)
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -82,7 +87,6 @@ private fun AttendanceCard(item: AttendanceUiModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Member Name
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.Person,
@@ -98,7 +102,6 @@ private fun AttendanceCard(item: AttendanceUiModel) {
                     )
                 }
 
-                // Status Badge
                 val statusColor = if (item.attendance.status == AttendanceStatus.Present) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -115,7 +118,6 @@ private fun AttendanceCard(item: AttendanceUiModel) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Event Name
             Text(
                 text = item.eventName,
                 style = MaterialTheme.typography.bodyLarge,
@@ -124,7 +126,6 @@ private fun AttendanceCard(item: AttendanceUiModel) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Date
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Outlined.CalendarMonth,

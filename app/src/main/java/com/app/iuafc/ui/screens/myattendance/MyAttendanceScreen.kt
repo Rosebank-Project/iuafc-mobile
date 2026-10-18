@@ -40,13 +40,19 @@ import java.util.Locale
 @Composable
 fun MyAttendanceScreen(
     user: UserProfile,
+    onBack: () -> Unit, // <-- ADDED BACK BUTTON
     modifier: Modifier = Modifier,
     viewModel: MyAttendanceViewModel = viewModel(factory = MyAttendanceViewModel.factory(user))
 ) {
     val attendanceList by viewModel.attendanceList.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    ScreenScaffold(title = "My Attendance", modifier = modifier) { padding ->
+    ScreenScaffold(
+        title = "My Attendance",
+        modifier = modifier,
+        onBack = onBack // <-- PASSED TO SCAFFOLD
+    ) { padding ->
+        // ... (rest of the UI stays exactly the same)
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
