@@ -1,4 +1,3 @@
-
 package com.app.iuafc.navigation
 
 import androidx.compose.foundation.Image
@@ -232,11 +231,11 @@ fun MainScaffold(
             }
 
             roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) {
-                AttendanceScreen(back)
+                AttendanceScreen()
             }
 
             roleScreen(user, AppDestination.MY_ATTENDANCE, MyAttendanceRoute::class) {
-                MyAttendanceScreen(back)
+                MyAttendanceScreen(user = user)
             }
 
             roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) {
