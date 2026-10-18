@@ -40,7 +40,7 @@ import java.util.Locale
 @Composable
 fun MyAttendanceScreen(
     user: UserProfile,
-    onBack: () -> Unit, // <-- ADDED BACK BUTTON
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyAttendanceViewModel = viewModel(factory = MyAttendanceViewModel.factory(user))
 ) {
@@ -50,9 +50,8 @@ fun MyAttendanceScreen(
     ScreenScaffold(
         title = "My Attendance",
         modifier = modifier,
-        onBack = onBack // <-- PASSED TO SCAFFOLD
+        onBack = onBack
     ) { padding ->
-        // ... (rest of the UI stays exactly the same)
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),

@@ -9,6 +9,7 @@ import com.app.iuafc.data.model.Event
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.EventRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +49,8 @@ class EventsViewModel(
                 } else emptyList()
 
                 _uiState.update { it.copy(isLoading = false, events = events, registeredEventIds = registeredIds) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to load events.") }
             }
@@ -65,7 +68,9 @@ class EventsViewModel(
                 } else {
                     repository.registerForEvent(eventId, user.memberId)
                 }
-                loadEvents() // Refresh the list
+                loadEvents()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = "Failed to update registration.") }
             }
@@ -78,8 +83,40 @@ class EventsViewModel(
             try {
                 repository.deleteEvent(eventId)
                 loadEvents()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to delete event.") }
+            }
+        }
+    }
+
+    // NEW: Create event
+    fun createEvent(event: Event) {
+        if (!canManage) return
+        viewModelScope.launch {
+            try {
+                repository.createEvent(event)
+                loadEvents()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to create event.") }
+            }
+        }
+    }
+
+    // NEW: Update event
+    fun updateEvent(event: Event) {
+        if (!canManage) return
+        viewModelScope.launch {
+            try {
+                repository.updateEvent(event)
+                loadEvents()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to update event.") }
             }
         }
     }

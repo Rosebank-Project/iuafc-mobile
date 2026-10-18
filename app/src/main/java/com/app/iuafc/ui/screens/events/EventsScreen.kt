@@ -1,14 +1,16 @@
 package com.app.iuafc.ui.screens.events
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -17,24 +19,41 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.iuafc.data.model.Event
 import com.app.iuafc.data.model.UserProfile
-import com.app.iuafc.ui.components.EmptyState
-import com.app.iuafc.ui.components.ErrorState
-import com.app.iuafc.ui.components.LoadingState
-import com.app.iuafc.ui.components.ScreenScaffold
+import com.app.iuafc.ui.components.*
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
 fun EventsScreen(
     user: UserProfile,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EventsViewModel = viewModel(factory = EventsViewModel.factory(user))
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    ScreenScaffold(title = "Events", modifier = modifier, onBack = onBack) { padding ->
+    var showForm by remember { mutableStateOf(false) }
+    var editingEvent by remember { mutableStateOf<Event?>(null) }
+    var deletingEvent by remember { mutableStateOf<Event?>(null) }
+    var viewingDetails by remember { mutableStateOf<Event?>(null) }
+
+    ScreenScaffold(
+        title = "Events",
+        modifier = modifier,
+        floatingActionButton = {
+            if (viewModel.canManage) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        editingEvent = null
+                        showForm = true
+                    },
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    text = { Text("New Event") }
+                )
+            }
+        }
+    ) { padding ->
         when {
             state.isLoading -> LoadingState(Modifier.padding(padding))
             state.errorMessage != null && state.events.isEmpty() ->
@@ -44,7 +63,7 @@ fun EventsScreen(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 88.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.events, key = { it.id }) { event ->
@@ -53,13 +72,61 @@ fun EventsScreen(
                             isRegistered = state.registeredEventIds.contains(event.id),
                             canRegister = viewModel.canRegister,
                             canManage = viewModel.canManage,
+                            onOpenDetails = { viewingDetails = event },
                             onToggleRegistration = { viewModel.toggleRegistration(event.id) },
-                            onDelete = { viewModel.deleteEvent(event.id) }
+                            onEdit = {
+                                editingEvent = event
+                                showForm = true
+                            },
+                            onDelete = { deletingEvent = event }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showForm) {
+        EventFormDialog(
+            event = editingEvent,
+            onDismiss = { showForm = false },
+            onSave = { newEvent ->
+                if (editingEvent == null) viewModel.createEvent(newEvent)
+                else viewModel.updateEvent(newEvent)
+                showForm = false
+            }
+        )
+    }
+
+    if (deletingEvent != null) {
+        AlertDialog(
+            onDismissRequest = { deletingEvent = null },
+            title = { Text("Delete event?") },
+            text = { Text("Are you sure you want to delete ${deletingEvent?.name}?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteEvent(deletingEvent!!.id)
+                    deletingEvent = null
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { deletingEvent = null }) { Text("Cancel") } }
+        )
+    }
+
+    if (viewingDetails != null) {
+        AlertDialog(
+            onDismissRequest = { viewingDetails = null },
+            title = { Text(viewingDetails!!.name) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(viewingDetails!!.description)
+                    Text("Date: ${formatDate(viewingDetails!!.date)}", fontWeight = FontWeight.Bold)
+                    Text("Time: ${viewingDetails!!.time}")
+                    Text("Venue: ${viewingDetails!!.venue}")
+                }
+            },
+            confirmButton = { TextButton(onClick = { viewingDetails = null }) { Text("Close") } }
+        )
     }
 }
 
@@ -69,11 +136,13 @@ private fun EventCard(
     isRegistered: Boolean,
     canRegister: Boolean,
     canManage: Boolean,
+    onOpenDetails: () -> Unit,
     onToggleRegistration: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onOpenDetails() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -88,14 +157,20 @@ private fun EventCard(
                     modifier = Modifier.weight(1f)
                 )
                 if (canManage) {
-                    IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Outlined.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
+                    Row {
+                        IconButton(onClick = onEdit, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Outlined.Edit, contentDescription = "Edit Event", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Outlined.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = event.description, style = MaterialTheme.typography.bodyMedium)
+            Text(text = event.description, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
 
             Spacer(modifier = Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -115,7 +190,6 @@ private fun EventCard(
                 Text(text = event.venue, style = MaterialTheme.typography.bodySmall)
             }
 
-            // Register button for Church Members
             if (canRegister) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
@@ -130,6 +204,138 @@ private fun EventCard(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EventFormDialog(
+    event: Event?,
+    onDismiss: () -> Unit,
+    onSave: (Event) -> Unit
+) {
+    var name by remember { mutableStateOf(event?.name ?: "") }
+    var desc by remember { mutableStateOf(event?.description ?: "") }
+    var date by remember { mutableStateOf(event?.date ?: "") }
+    var time by remember { mutableStateOf(event?.time ?: "") }
+    var venue by remember { mutableStateOf(event?.venue ?: "") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    // UI states for date/time pickers
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    // Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        // Convert millis to YYYY-MM-DD
+                        val selectedDate = java.time.Instant.ofEpochMilli(it)
+                            .atZone(java.time.ZoneId.of("UTC"))
+                            .toLocalDate()
+                        date = selectedDate.toString()
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Time Picker Dialog
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(is24Hour = true)
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Select Time") },
+            text = {
+                TimePicker(state = timePickerState)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    // Format to HH:mm
+                    val hour = timePickerState.hour.toString().padStart(2, '0')
+                    val minute = timePickerState.minute.toString().padStart(2, '0')
+                    time = "$hour:$minute"
+                    showTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } }
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (event == null) "New Event" else "Edit Event") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Event Name *") }, singleLine = true)
+                OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
+
+                // Date Field (Clickable to open calendar)
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = {},
+                    label = { Text("Date *") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Outlined.CalendarMonth, "Pick Date")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Time Field (Clickable to open clock)
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = {},
+                    label = { Text("Time *") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showTimePicker = true }) {
+                            Icon(Icons.Outlined.AccessTime, "Pick Time")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(value = venue, onValueChange = { venue = it }, label = { Text("Venue *") }, singleLine = true)
+
+                if (error != null) {
+                    Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (name.isBlank() || date.isBlank() || time.isBlank() || venue.isBlank()) {
+                    error = "Please fill in all required fields."
+                } else {
+                    onSave(
+                        Event(
+                            id = event?.id ?: "evt-${System.currentTimeMillis()}",
+                            name = name,
+                            description = desc,
+                            date = date,
+                            time = time,
+                            venue = venue,
+                            createdBy = event?.createdBy ?: "user-1"
+                        )
+                    )
+                }
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
 
 private fun formatDate(value: String): String {

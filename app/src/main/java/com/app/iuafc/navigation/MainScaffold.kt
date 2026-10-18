@@ -103,6 +103,7 @@ fun MainScaffold(
     }
 
     Scaffold(
+        // The TopAppBar handles status-bar insets; avoid fixed top padding.
         contentWindowInsets = WindowInsets(0),
         topBar = {
             SharedChurchHeader(
@@ -157,10 +158,7 @@ fun MainScaffold(
             }
 
             composable<EventsRoute> {
-                EventsScreen(
-                    user = user,
-                    onBack = back
-                )
+                EventsScreen(user = user)
             }
 
             composable<AnnouncementsRoute> {
@@ -331,6 +329,10 @@ private fun initialsFor(fullName: String): String {
     }
 }
 
+/**
+ * Registers a screen that only some roles can open; others see "Access denied".
+ * [adminOnly] restricts it further to Administrators (e.g. forms that change data).
+ */
 private fun <T : Any> NavGraphBuilder.roleScreen(
     user: UserProfile,
     destination: AppDestination,
@@ -351,6 +353,7 @@ private fun <T : Any> NavGraphBuilder.roleScreen(
     }
 }
 
+/** Switches bottom bar tabs without stacking them on top of each other. */
 private fun NavHostController.navigateToTab(route: Any) {
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }

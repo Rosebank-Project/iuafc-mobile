@@ -38,7 +38,6 @@ fun AttendanceScreen(
         } else {
             Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
 
-                // 1. Event Dropdown
                 val selectedEvent = state.events.find { it.id == state.selectedEventId }
                 DropdownField(
                     label = "Select Event",
@@ -51,7 +50,15 @@ fun AttendanceScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // 2. Member List with Toggles
+                if (state.errorMessage != null) {
+                    Text(
+                        state.errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
                 if (state.selectedEventId == null) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         Text("Pick an event to capture attendance.", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -59,7 +66,7 @@ fun AttendanceScreen(
                 } else {
                     LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(state.members, key = { it.id }) { member ->
-                            val status = state.attendanceMap[member.id] ?: AttendanceStatus.Absent
+                            val status = state.attendanceMap[member.id]
                             AttendanceRow(
                                 memberName = member.fullName,
                                 status = status,
@@ -68,7 +75,6 @@ fun AttendanceScreen(
                         }
                     }
 
-                    // 3. Save Button
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = { viewModel.saveAttendance() },
@@ -92,7 +98,7 @@ fun AttendanceScreen(
 @Composable
 private fun AttendanceRow(
     memberName: String,
-    status: AttendanceStatus,
+    status: AttendanceStatus?,
     onStatusChange: (AttendanceStatus) -> Unit
 ) {
     Card(
