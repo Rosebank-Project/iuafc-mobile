@@ -26,9 +26,9 @@ data class AttendanceUiState(
     val isSaving: Boolean = false,
     val events: List<Event> = emptyList(),
     val selectedEventId: String? = null,
-    val selectedEventDate: String? = null, // To fix Bug 3
+    val selectedEventDate: String? = null, // attendance is saved with the event's date
     val members: List<Member> = emptyList(),
-    val attendanceMap: Map<String, AttendanceStatus?> = emptyMap(), // Nullable for Bug 7
+    val attendanceMap: Map<String, AttendanceStatus?> = emptyMap(), // memberId -> status (null = not marked yet)
     val errorMessage: String? = null,
     val saveSuccess: Boolean = false
 )
@@ -56,7 +56,7 @@ class AttendanceViewModel(
                 val events = eventRepo.getEvents()
                 var members = memberRepo.getMembers()
 
-                // Bug 6: If Ministry Leader, only show their ministry's members
+                // Ministry Leaders only capture attendance for their own ministry
                 if (user.role == Role.MINISTRY_LEADER && user.ministryId != null) {
                     members = members.filter { it.ministryId == user.ministryId }
                 }
@@ -84,7 +84,7 @@ class AttendanceViewModel(
         viewModelScope.launch {
             try {
                 val existing = attendanceRepo.getAttendanceForEvent(eventId)
-                // Bug 7: Default to null (no status) instead of Absent
+                // Keep saved statuses; everyone else starts unmarked
                 val map = _uiState.value.members.associate { member ->
                     val status = existing.find { it.memberId == member.id }?.status
                     member.id to status
@@ -98,18 +98,17 @@ class AttendanceViewModel(
         }
     }
 
-    // Bug 7: Accept nullable status
     fun toggleStatus(memberId: String, status: AttendanceStatus?) {
         val currentMap = _uiState.value.attendanceMap.toMutableMap()
         currentMap[memberId] = status
-        _uiState.update { it.copy(attendanceMap = currentMap, saveSuccess = false) }
+        _uiState.update { it.copy(attendanceMap = currentMap, saveSuccess = false, errorMessage = null) }
     }
 
     fun saveAttendance() {
         val eventId = _uiState.value.selectedEventId ?: return
         val eventDate = _uiState.value.selectedEventDate ?: return
 
-        // Bug 7: Validation - ensure all members have a status
+        // Every member needs a status before saving
         if (_uiState.value.attendanceMap.values.any { it == null }) {
             _uiState.update { it.copy(errorMessage = "Please mark all members Present or Absent before saving.") }
             return
@@ -124,7 +123,7 @@ class AttendanceViewModel(
                         id = "att-${System.currentTimeMillis()}-$memberId",
                         memberId = memberId,
                         eventId = eventId,
-                        attendanceDate = eventDate, // Bug 3: Use event date instead of LocalDate.now()
+                        attendanceDate = eventDate,
                         status = status
                     )
                 }

@@ -69,11 +69,11 @@ class AppContainer(
             announcementRepository = announcementRepository,
         )
 
-    // NEW: Event repository for registering/unregistering and managing events
+    // Events and registrations (mock until the Supabase repository is added)
     val eventRepository: EventRepository =
         MockEventRepository()
 
-    // NEW: Attendance repository for capturing and saving attendance
+    // Attendance captured by leaders and shown in My Attendance
     val attendanceRepository: AttendanceRepository =
         MockAttendanceRepository()
 

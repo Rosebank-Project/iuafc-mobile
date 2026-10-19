@@ -91,7 +91,6 @@ class EventsViewModel(
         }
     }
 
-    // NEW: Create event
     fun createEvent(event: Event) {
         if (!canManage) return
         viewModelScope.launch {
@@ -106,7 +105,6 @@ class EventsViewModel(
         }
     }
 
-    // NEW: Update event
     fun updateEvent(event: Event) {
         if (!canManage) return
         viewModelScope.launch {

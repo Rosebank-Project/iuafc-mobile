@@ -32,18 +32,21 @@ class MyAttendanceViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     init {
         loadMyAttendance()
     }
 
-    private fun loadMyAttendance() {
+    fun loadMyAttendance() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
                 if (user.memberId == null) {
                     _attendanceList.value = emptyList()
                 } else {
-                    // Bug 4: Read from Repository, not MockData
                     val myRecords = attendanceRepo.getAttendanceForMember(user.memberId)
                     val allEvents = eventRepo.getEvents()
 
@@ -56,7 +59,7 @@ class MyAttendanceViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _attendanceList.value = emptyList()
+                _errorMessage.value = "Could not load your attendance. Please try again."
             } finally {
                 _isLoading.value = false
             }

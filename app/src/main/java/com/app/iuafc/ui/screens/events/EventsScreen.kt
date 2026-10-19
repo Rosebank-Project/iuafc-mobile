@@ -59,14 +59,30 @@ fun EventsScreen(
             state.errorMessage != null && state.events.isEmpty() ->
                 ErrorState(state.errorMessage!!, Modifier.padding(padding), onRetry = viewModel::loadEvents)
             state.events.isEmpty() ->
-                EmptyState(title = "No events", message = "There are no upcoming events at the moment.", modifier = Modifier.padding(padding))
+                EmptyState(title = "No events", message = "There are no events at the moment.", modifier = Modifier.padding(padding))
             else -> {
+                // Upcoming events first (soonest on top), then past events (most recent on top),
+                // like the website. Members can only register for upcoming events.
+                val today = LocalDate.now().toString()
+                val upcoming = state.events.filter { it.date >= today }.sortedWith(compareBy({ it.date }, { it.time }))
+                val past = state.events.filter { it.date < today }.sortedWith(compareByDescending<Event> { it.date }.thenByDescending { it.time })
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 88.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.events, key = { it.id }) { event ->
+                    item(key = "upcoming-header") { SectionHeader("Upcoming (${upcoming.size})") }
+                    if (upcoming.isEmpty()) {
+                        item(key = "upcoming-empty") {
+                            Text(
+                                "No upcoming events.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    items(upcoming, key = { it.id }) { event ->
                         EventCard(
                             event = event,
                             isRegistered = state.registeredEventIds.contains(event.id),
@@ -81,6 +97,24 @@ fun EventsScreen(
                             onDelete = { deletingEvent = event }
                         )
                     }
+                    if (past.isNotEmpty()) {
+                        item(key = "past-header") { SectionHeader("Past (${past.size})") }
+                        items(past, key = { it.id }) { event ->
+                            EventCard(
+                                event = event,
+                                isRegistered = state.registeredEventIds.contains(event.id),
+                                canRegister = false,
+                                canManage = viewModel.canManage,
+                                onOpenDetails = { viewingDetails = event },
+                                onToggleRegistration = {},
+                                onEdit = {
+                                    editingEvent = event
+                                    showForm = true
+                                },
+                                onDelete = { deletingEvent = event }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -89,6 +123,7 @@ fun EventsScreen(
     if (showForm) {
         EventFormDialog(
             event = editingEvent,
+            createdBy = user.id,
             onDismiss = { showForm = false },
             onSave = { newEvent ->
                 if (editingEvent == null) viewModel.createEvent(newEvent)
@@ -128,6 +163,16 @@ fun EventsScreen(
             confirmButton = { TextButton(onClick = { viewingDetails = null }) { Text("Close") } }
         )
     }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
@@ -210,6 +255,7 @@ private fun EventCard(
 @Composable
 private fun EventFormDialog(
     event: Event?,
+    createdBy: String,
     onDismiss: () -> Unit,
     onSave: (Event) -> Unit
 ) {
@@ -226,7 +272,14 @@ private fun EventFormDialog(
 
     // Date Picker Dialog
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
+        // A new event can't be scheduled in the past (an existing past event can still be edited).
+        val todayMillis = LocalDate.now().atStartOfDay(java.time.ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val datePickerState = rememberDatePickerState(
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = event != null || utcTimeMillis >= todayMillis
+                override fun isSelectableYear(year: Int) = event != null || year >= LocalDate.now().year
+            }
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -319,16 +372,18 @@ private fun EventFormDialog(
             TextButton(onClick = {
                 if (name.isBlank() || date.isBlank() || time.isBlank() || venue.isBlank()) {
                     error = "Please fill in all required fields."
+                } else if (event == null && date < LocalDate.now().toString()) {
+                    error = "The date can't be in the past."
                 } else {
                     onSave(
                         Event(
                             id = event?.id ?: "evt-${System.currentTimeMillis()}",
-                            name = name,
-                            description = desc,
+                            name = name.trim(),
+                            description = desc.trim(),
                             date = date,
                             time = time,
-                            venue = venue,
-                            createdBy = event?.createdBy ?: "user-1"
+                            venue = venue.trim(),
+                            createdBy = event?.createdBy ?: createdBy
                         )
                     )
                 }

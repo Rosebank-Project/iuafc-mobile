@@ -130,7 +130,8 @@ fun MainScaffold(
                             },
                             label = { Text(item.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor =
+                                    MaterialTheme.colorScheme.primary,
                             ),
                         )
                     }
@@ -152,8 +153,12 @@ fun MainScaffold(
                 DashboardScreen(
                     user = user,
                     onOpenNotifications = ::openNotifications,
-                    onOpenEvents = { navController.navigateToTab(EventsRoute) },
-                    onOpenAnnouncements = { navController.navigateToTab(AnnouncementsRoute) },
+                    onOpenEvents = {
+                        navController.navigateToTab(EventsRoute)
+                    },
+                    onOpenAnnouncements = {
+                        navController.navigateToTab(AnnouncementsRoute)
+                    },
                 )
             }
 
@@ -168,7 +173,11 @@ fun MainScaffold(
             composable<MenuRoute> {
                 MenuScreen(
                     user = user,
-                    onNavigate = { item -> navController.navigate(item.route) { launchSingleTop = true } },
+                    onNavigate = { item ->
+                        navController.navigate(item.route) {
+                            launchSingleTop = true
+                        }
+                    },
                     onSignOut = onSignOut,
                 )
             }
@@ -185,8 +194,12 @@ fun MainScaffold(
                 MembersScreen(
                     onBack = back,
                     canManage = isAdmin,
-                    onOpenMember = { memberId -> navController.navigate(MemberDetailRoute(memberId)) },
-                    onAddMember = { navController.navigate(MemberFormRoute()) },
+                    onOpenMember = { memberId ->
+                        navController.navigate(MemberDetailRoute(memberId))
+                    },
+                    onAddMember = {
+                        navController.navigate(MemberFormRoute())
+                    },
                 )
             }
 
@@ -194,11 +207,18 @@ fun MainScaffold(
                 MemberDetailScreen(
                     onBack = back,
                     canManage = isAdmin,
-                    onEdit = { memberId -> navController.navigate(MemberFormRoute(memberId)) },
+                    onEdit = { memberId ->
+                        navController.navigate(MemberFormRoute(memberId))
+                    },
                 )
             }
 
-            roleScreen(user, AppDestination.MEMBERS, MemberFormRoute::class, adminOnly = true) {
+            roleScreen(
+                user,
+                AppDestination.MEMBERS,
+                MemberFormRoute::class,
+                adminOnly = true,
+            ) {
                 MemberFormScreen(back)
             }
 
@@ -231,7 +251,9 @@ fun MainScaffold(
                     user = user,
                     onBack = back,
                     onSignOut = onSignOut,
-                    onOpenHelp = { navController.navigate(HelpRoute) },
+                    onOpenHelp = {
+                        navController.navigate(HelpRoute)
+                    },
                 )
             }
 
@@ -263,7 +285,9 @@ private fun SharedChurchHeader(
                     Card(
                         modifier = Modifier.size(42.dp),
                         shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White,
+                        ),
                     ){
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -272,7 +296,9 @@ private fun SharedChurchHeader(
                             Image(
                                 painter = painterResource(R.drawable.church_logo),
                                 contentDescription = "IUAFC church logo",
-                                modifier = Modifier.fillMaxSize().padding(5.dp),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(5.dp),
                             )
                         }
                     }
@@ -299,7 +325,9 @@ private fun SharedChurchHeader(
                 }
 
                 Surface(
-                    modifier = Modifier.padding(start = 4.dp, end = 16.dp).size(42.dp),
+                    modifier = Modifier
+                        .padding(start = 4.dp, end = 16.dp)
+                        .size(42.dp),
                     shape = RoundedCornerShape(50),
                     color = HeaderNavy,
                 ) {
@@ -321,9 +349,14 @@ private fun SharedChurchHeader(
 }
 
 private fun initialsFor(fullName: String): String {
-    val parts = fullName.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+    val parts = fullName.trim()
+        .split("\\s+".toRegex())
+        .filter { it.isNotBlank() }
+
     return when {
-        parts.size >= 2 -> "${parts.first().first()}${parts.last().first()}".uppercase()
+        parts.size >= 2 ->
+            "${parts.first().first()}${parts.last().first()}".uppercase()
+
         parts.size == 1 -> parts.first().take(2).uppercase()
         else -> "?"
     }
@@ -341,13 +374,17 @@ private fun <T : Any> NavGraphBuilder.roleScreen(
     content: @Composable () -> Unit,
 ) {
     composable(route) {
-        val allowed = destination.isAllowedFor(user.role) && (!adminOnly || user.role == Role.ADMINISTRATOR)
+        val allowed =
+            destination.isAllowedFor(user.role) &&
+                    (!adminOnly || user.role == Role.ADMINISTRATOR)
+
         if (allowed) {
             content()
         } else {
             EmptyState(
                 title = "Access denied",
-                message = "Your role (${user.role.displayName}) cannot open ${destination.label}.",
+                message = "Your role (${user.role.displayName}) " +
+                        "cannot open ${destination.label}.",
             )
         }
     }
@@ -356,7 +393,9 @@ private fun <T : Any> NavGraphBuilder.roleScreen(
 /** Switches bottom bar tabs without stacking them on top of each other. */
 private fun NavHostController.navigateToTab(route: Any) {
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
         launchSingleTop = true
         restoreState = true
     }

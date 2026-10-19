@@ -118,13 +118,19 @@ private fun AttendanceRow(
                     selected = status == AttendanceStatus.Present,
                     onClick = { onStatusChange(AttendanceStatus.Present) },
                     label = { Text("Present") },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer)
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    )
                 )
                 FilterChip(
                     selected = status == AttendanceStatus.Absent,
                     onClick = { onStatusChange(AttendanceStatus.Absent) },
                     label = { Text("Absent") },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.errorContainer)
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.error,
+                        selectedLabelColor = MaterialTheme.colorScheme.onError,
+                    )
                 )
             }
         }
