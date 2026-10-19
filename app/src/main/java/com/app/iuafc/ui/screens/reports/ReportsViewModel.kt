@@ -5,14 +5,17 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.app.iuafc.appContainer
-import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Attendance
 import com.app.iuafc.data.model.Donation
 import com.app.iuafc.data.model.Event
 import com.app.iuafc.data.model.Member
 import com.app.iuafc.data.model.Ministry
 import com.app.iuafc.data.repository.ChurchFeaturesRepository
+import com.app.iuafc.data.repository.AttendanceRepository
+import com.app.iuafc.data.repository.EventRepository
 import com.app.iuafc.data.repository.MemberRepository
+import com.app.iuafc.data.repository.MockAttendanceRepository
+import com.app.iuafc.data.repository.MockEventRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +36,8 @@ data class ReportsUiState(
 class ReportsViewModel(
     private val featureRepository: ChurchFeaturesRepository,
     private val memberRepository: MemberRepository,
+    private val eventRepository: EventRepository = MockEventRepository(),
+    private val attendanceRepository: AttendanceRepository = MockAttendanceRepository(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ReportsUiState())
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
@@ -43,16 +48,16 @@ class ReportsViewModel(
             val members = memberRepository.getMembers()
             val ministries = featureRepository.getMinistries()
             val donations = featureRepository.getDonations()
+            val events = eventRepository.getEvents()
+            val attendance = attendanceRepository.getAttendance()
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     members = members,
                     ministries = ministries,
                     donations = donations,
-                    // Reading MockData for events and attendance is expected until
-                    // Rolph's event and attendance repositories exist (#4).
-                    events = MockData.events,
-                    attendance = MockData.attendance,
+                    events = events,
+                    attendance = attendance,
                 )
             }
         } catch (e: CancellationException) {
@@ -65,7 +70,12 @@ class ReportsViewModel(
     companion object {
         val Factory = viewModelFactory {
             initializer {
-                ReportsViewModel(appContainer.churchFeaturesRepository, appContainer.memberRepository)
+                ReportsViewModel(
+                    appContainer.churchFeaturesRepository,
+                    appContainer.memberRepository,
+                    appContainer.eventRepository,
+                    appContainer.attendanceRepository,
+                )
             }
         }
     }

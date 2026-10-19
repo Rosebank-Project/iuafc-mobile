@@ -41,7 +41,7 @@ class MinistriesViewModel(
         _uiState.update { it.copy(isLoading = it.ministries.isEmpty(), errorMessage = null) }
         try {
             val ministries = repository.getMinistries()
-            val users = userRepository.getUsers()
+            val users = userRepository.getDirectory()
             _uiState.update { it.copy(isLoading = false, ministries = ministries, users = users) }
         } catch (e: CancellationException) {
             throw e

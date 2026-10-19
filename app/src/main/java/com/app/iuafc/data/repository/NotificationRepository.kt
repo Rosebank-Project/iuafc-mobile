@@ -1,6 +1,5 @@
 package com.app.iuafc.data.repository
 
-import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.ActivityStatus
 import com.app.iuafc.data.model.AppNotification
 import com.app.iuafc.data.model.NotificationType
@@ -14,66 +13,32 @@ interface NotificationRepository {
     suspend fun markAllAsRead()
 }
 
+/**
+ * Notifications built from announcements, events and reviewed activities each time they are
+ * loaded. Which ones were read is kept in memory while the app is open.
+ */
 class MockNotificationRepository(
     private val announcementRepository: AnnouncementRepository =
         MockAnnouncementRepository(),
+    private val eventRepository: EventRepository = MockEventRepository(),
+    private val featuresRepository: ChurchFeaturesRepository = MockChurchFeaturesRepository(),
 ) : NotificationRepository {
 
-    private val notifications: MutableList<AppNotification> =
-        createStaticNotifications().toMutableList()
+    private val readIds = mutableSetOf<String>()
+    private var lastIds: List<String> = emptyList()
 
     override suspend fun getNotifications(): List<AppNotification> {
-        val announcements = announcementRepository.getAnnouncements()
-
-        // Preserve read/unread status when refreshing notifications.
-        val existingReadStatus = notifications.associate {
-            it.id to it.isRead
-        }
-
-        // Create a notification for every current announcement.
-        val announcementNotifications = announcements.map { announcement ->
-            val notificationId = "announcement-${announcement.id}"
-
+        val announcements = announcementRepository.getAnnouncements().map { announcement ->
             AppNotification(
-                id = notificationId,
+                id = "announcement-${announcement.id}",
                 type = NotificationType.Announcement,
                 title = announcement.title,
                 message = announcement.message,
                 timestamp = "${announcement.publishDate}T00:00:00",
-                isRead = existingReadStatus[notificationId] ?: false,
             )
         }
 
-        // Replace announcement notifications with the latest list.
-        notifications.removeAll {
-            it.type == NotificationType.Announcement
-        }
-
-        notifications.addAll(announcementNotifications)
-
-        return notifications.sortedByDescending { it.timestamp }
-    }
-
-    override suspend fun markAsRead(notificationId: String) {
-        val index = notifications.indexOfFirst {
-            it.id == notificationId
-        }
-
-        if (index != -1) {
-            notifications[index] =
-                notifications[index].copy(isRead = true)
-        }
-    }
-
-    override suspend fun markAllAsRead() {
-        for (index in notifications.indices) {
-            notifications[index] =
-                notifications[index].copy(isRead = true)
-        }
-    }
-
-    private fun createStaticNotifications(): List<AppNotification> {
-        val eventNotifications = MockData.events.map { event ->
+        val events = eventRepository.getEvents().map { event ->
             AppNotification(
                 id = "event-${event.id}",
                 type = NotificationType.Event,
@@ -83,32 +48,32 @@ class MockNotificationRepository(
             )
         }
 
-        val activityNotifications = MockData.activities
-            .filter { activity ->
-                activity.status == ActivityStatus.Approved ||
-                        activity.status == ActivityStatus.Rejected
-            }
+        val activities = featuresRepository.getActivities()
+            .filter { it.status == ActivityStatus.Approved || it.status == ActivityStatus.Rejected }
             .mapNotNull { activity ->
-                val reviewedAt = activity.reviewedAt
-                    ?: return@mapNotNull null
-
-                val statusText =
-                    if (activity.status == ActivityStatus.Approved) {
-                        "approved"
-                    } else {
-                        "rejected"
-                    }
-
+                val reviewedAt = activity.reviewedAt ?: return@mapNotNull null
+                val statusText = if (activity.status == ActivityStatus.Approved) "approved" else "rejected"
                 AppNotification(
                     id = "activity-${activity.id}",
                     type = NotificationType.ActivityApproval,
                     title = "Activity $statusText",
-                    message = activity.title +
-                            (activity.reviewNote?.let { " — $it" } ?: ""),
+                    message = activity.title + (activity.reviewNote?.let { " — $it" } ?: ""),
                     timestamp = reviewedAt,
                 )
             }
 
-        return eventNotifications + activityNotifications
+        val all = (announcements + events + activities)
+            .map { it.copy(isRead = it.id in readIds) }
+            .sortedByDescending { it.timestamp }
+        lastIds = all.map { it.id }
+        return all
+    }
+
+    override suspend fun markAsRead(notificationId: String) {
+        readIds += notificationId
+    }
+
+    override suspend fun markAllAsRead() {
+        readIds += lastIds
     }
 }

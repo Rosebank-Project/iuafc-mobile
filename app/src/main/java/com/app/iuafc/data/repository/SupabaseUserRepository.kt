@@ -3,6 +3,7 @@ package com.app.iuafc.data.repository
 
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.data.remote.DirectoryRow
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
@@ -32,6 +33,9 @@ class SupabaseUserRepository(
                 order("full_name", Order.ASCENDING)
             }
             .decodeList<UserProfile>()
+
+    override suspend fun getDirectory(): List<UserProfile> =
+        supabase.postgrest.rpc("profile_directory").decodeList<DirectoryRow>().map { it.toUser() }
 
     override suspend fun updateFullName(
         userId: String,

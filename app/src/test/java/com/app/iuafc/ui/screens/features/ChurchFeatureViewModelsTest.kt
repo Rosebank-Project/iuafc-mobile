@@ -5,7 +5,9 @@ import com.app.iuafc.data.model.DonationType
 import com.app.iuafc.data.model.PaymentMethod
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.data.repository.MockAttendanceRepository
 import com.app.iuafc.data.repository.MockChurchFeaturesRepository
+import com.app.iuafc.data.repository.MockEventRepository
 import com.app.iuafc.data.repository.MockMemberRepository
 import com.app.iuafc.ui.screens.activities.ActivitiesViewModel
 import com.app.iuafc.ui.screens.donations.DonationsViewModel
@@ -125,7 +127,7 @@ class ChurchFeatureViewModelsTest {
 
     @Test
     fun reportsViewModel_loadsSummaryDataSuccessfully() = runTest {
-        val viewModel = ReportsViewModel(features, members)
+        val viewModel = ReportsViewModel(features, members, MockEventRepository(delayMillis = 0), MockAttendanceRepository(delayMillis = 0))
         viewModel.load()
 
         val state = viewModel.uiState.value
@@ -133,5 +135,7 @@ class ChurchFeatureViewModelsTest {
         assertTrue(state.members.isNotEmpty())
         assertTrue(state.ministries.isNotEmpty())
         assertTrue(state.donations.isNotEmpty())
+        assertTrue(state.events.isNotEmpty())
+        assertTrue(state.attendance.isNotEmpty())
     }
 }

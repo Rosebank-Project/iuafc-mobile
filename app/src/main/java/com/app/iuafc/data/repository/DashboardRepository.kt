@@ -1,7 +1,6 @@
 
 package com.app.iuafc.data.repository
 
-import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.model.Event
 import com.app.iuafc.data.model.Role
@@ -23,9 +22,14 @@ interface DashboardRepository {
     suspend fun getDashboard(user: UserProfile): DashboardData
 }
 
+/** Builds the dashboard of each role from the other repositories. */
 class MockDashboardRepository(
     private val announcementRepository: AnnouncementRepository =
         MockAnnouncementRepository(),
+    private val memberRepository: MemberRepository = MockMemberRepository(delayMillis = 0),
+    private val featuresRepository: ChurchFeaturesRepository = MockChurchFeaturesRepository(delayMillis = 0),
+    private val eventRepository: EventRepository = MockEventRepository(),
+    private val attendanceRepository: AttendanceRepository = MockAttendanceRepository(),
 ) : DashboardRepository {
 
     override suspend fun getDashboard(
@@ -33,9 +37,13 @@ class MockDashboardRepository(
     ): DashboardData {
 
         val today = LocalDate.now().toString()
+        val members = memberRepository.getMembers()
+        val ministries = featuresRepository.getMinistries()
+        val donations = featuresRepository.getDonations()
+        val events = eventRepository.getEvents()
 
         // Count every upcoming event.
-        val allUpcomingEvents = MockData.events
+        val allUpcomingEvents = events
             .filter { it.date >= today }
             .sortedBy { it.date }
 
@@ -48,7 +56,7 @@ class MockDashboardRepository(
 
         val latestAnnouncements = allAnnouncements.take(3)
 
-        val totalDonations = MockData.donations
+        val totalDonations = donations
             .sumOf { it.amount }
 
         val formattedDonations =
@@ -59,7 +67,7 @@ class MockDashboardRepository(
             Role.ADMINISTRATOR -> listOf(
                 DashboardSummary(
                     label = "Total Members",
-                    value = MockData.members.size.toString(),
+                    value = members.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
@@ -78,11 +86,11 @@ class MockDashboardRepository(
             Role.PASTOR -> listOf(
                 DashboardSummary(
                     label = "Total Members",
-                    value = MockData.members.size.toString(),
+                    value = members.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Ministries",
-                    value = MockData.ministries.size.toString(),
+                    value = ministries.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
@@ -105,7 +113,7 @@ class MockDashboardRepository(
                 ),
                 DashboardSummary(
                     label = "Total Members",
-                    value = MockData.members.size.toString(),
+                    value = members.size.toString(),
                 ),
                 DashboardSummary(
                     label = "Upcoming Events",
@@ -118,7 +126,7 @@ class MockDashboardRepository(
             )
 
             Role.MINISTRY_LEADER -> {
-                val activities = MockData.activities.count {
+                val activities = featuresRepository.getActivities().count {
                     it.ministryId == user.ministryId
                 }
 
@@ -137,18 +145,18 @@ class MockDashboardRepository(
                     ),
                     DashboardSummary(
                         label = "Ministries",
-                        value = MockData.ministries.size.toString(),
+                        value = ministries.size.toString(),
                     ),
                 )
             }
 
             Role.CHURCH_MEMBER -> {
-                val attendance = MockData.attendance.count {
+                val attendance = attendanceRepository.getAttendance().count {
                     user.memberId != null &&
                             it.memberId == user.memberId
                 }
 
-                val donations = MockData.donations
+                val donations = donations
                     .filter {
                         user.memberId != null &&
                                 it.memberId == user.memberId

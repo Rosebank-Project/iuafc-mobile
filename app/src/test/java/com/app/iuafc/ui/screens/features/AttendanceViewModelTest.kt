@@ -46,6 +46,7 @@ class AttendanceViewModelTest {
 
     private class FakeAttendanceRepo : AttendanceRepository {
         val savedRecords = mutableListOf<Attendance>()
+        override suspend fun getAttendance(): List<Attendance> = savedRecords.toList()
         override suspend fun getAttendanceForEvent(eventId: String): List<Attendance> = savedRecords.filter { it.eventId == eventId }
         override suspend fun saveAttendance(records: List<Attendance>) {
             savedRecords.addAll(records)

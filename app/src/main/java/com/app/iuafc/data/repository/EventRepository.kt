@@ -15,23 +15,23 @@ interface EventRepository {
     suspend fun getRegisteredEventIds(memberId: String): List<String>
 }
 
-class MockEventRepository : EventRepository {
+class MockEventRepository(private val delayMillis: Long = 300) : EventRepository {
     // We use mutable lists so changes save temporarily while the app is running
     private val eventsList = MockData.events.toMutableList()
     private val registrationsList = MockData.eventRegistrations.toMutableList()
 
     override suspend fun getEvents(): List<Event> {
-        delay(300) // Simulate network
+        delay(delayMillis)
         return eventsList.toList()
     }
 
     override suspend fun createEvent(event: Event) {
-        delay(300)
+        delay(delayMillis)
         eventsList.add(event)
     }
 
     override suspend fun updateEvent(event: Event) {
-        delay(300)
+        delay(delayMillis)
         val index = eventsList.indexOfFirst { it.id == event.id }
         if (index != -1) {
             eventsList[index] = event
@@ -39,12 +39,12 @@ class MockEventRepository : EventRepository {
     }
 
     override suspend fun deleteEvent(eventId: String) {
-        delay(300)
+        delay(delayMillis)
         eventsList.removeAll { it.id == eventId }
     }
 
     override suspend fun registerForEvent(eventId: String, memberId: String) {
-        delay(300)
+        delay(delayMillis)
         // Don't double register
         if (registrationsList.none { it.eventId == eventId && it.memberId == memberId }) {
             registrationsList.add(EventRegistration(eventId, memberId))
@@ -52,12 +52,12 @@ class MockEventRepository : EventRepository {
     }
 
     override suspend fun unregisterFromEvent(eventId: String, memberId: String) {
-        delay(300)
+        delay(delayMillis)
         registrationsList.removeAll { it.eventId == eventId && it.memberId == memberId }
     }
 
     override suspend fun getRegisteredEventIds(memberId: String): List<String> {
-        delay(300)
+        delay(delayMillis)
         return registrationsList.filter { it.memberId == memberId }.map { it.eventId }
     }
 }

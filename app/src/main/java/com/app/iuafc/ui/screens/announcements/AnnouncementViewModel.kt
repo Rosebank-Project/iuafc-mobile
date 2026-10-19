@@ -60,7 +60,7 @@ class AnnouncementViewModel(
 
         viewModelScope.launch {
             try {
-                _authors.value = usersRepository.getUsers()
+                _authors.value = usersRepository.getDirectory()
                     .associate { user ->
                         user.id to user.fullName
                     }
