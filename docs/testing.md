@@ -79,16 +79,25 @@ Latest results on `main` (19 October 2026):
 
 | Workflow | Job | Result | Duration | Run |
 |---|---|---|---|---|
-| Android CI | Unit tests and build | ✅ success | 3 min | [#39222274819](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39222274819) |
-| Android CI | UI tests (emulator) | ✅ success | 5 min | [#39222274819](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39222274819) |
+| Android CI | Unit tests and build | ✅ success | 2 min 53 s | [#39236648804](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39236648804) |
+| Android CI | UI tests (emulator) | ✅ success | 5 min 3 s | [#39236648804](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39236648804) |
 | Database migrations | Apply migrations | ✅ success | – | [#39202745250](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39202745250) |
 
-Over the project, Android CI ran 56 times (48 successful) and Database migrations 17 times (15 successful).
+Over the project, Android CI ran 60 times (52 successful) and Database migrations 17 times (15 successful).
 The failed runs are the ones that caught problems before merging, for example a broken build in a pull
 request and an expired Supabase access token.
 
-> **Screenshots for the report:** open the two runs above on GitHub and take a screenshot of each summary
-> page (both jobs green). Save them as `docs/images/ci-android.png` and `docs/images/ci-database.png`.
+Android CI runs (every pull request and every push to `main`):
+
+![Android CI runs](images/ci-runs.png)
+
+Latest run on `main` – both jobs passed and the APK and test reports were uploaded as artifacts:
+
+![Android CI run on main](images/ci-run-main.png)
+
+Database migrations – dry run on pull requests, applied on `main`:
+
+![Database migrations runs](images/ci-database.png)
 
 ## 4. Manual test cases
 
