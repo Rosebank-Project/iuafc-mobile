@@ -233,7 +233,7 @@ accounts. Record any bug as a GitHub issue with the `bug` label.
 
 | Phone | Android version | Date | Tester | Result | Bugs (issues) |
 |---|---|---|---|---|---|
-| _phone model_ | _Android version_ | 2026-10-19 | Rolph | Pass – TC-01 to TC-50 passed (5 test accounts and Google sign-in) | None |
+| Samsung Galaxy A35 | Android 16 | 2026-10-19 | Rolph | Pass – TC-01 to TC-50 passed (5 test accounts and Google sign-in) | None |
 
 The APK installed and ran on the phone with the same results as on the emulator: every role saw only its
 own screens, data saved on the phone appeared on the website, and no crashes or new bugs were found, so
