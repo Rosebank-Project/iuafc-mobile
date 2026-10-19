@@ -13,6 +13,8 @@ the phone appears on the website and the other way round.
 
 Built by **ALAVUMIRO TECH CONSULTANTS** for XISD6329 (Work Integrated Learning), The IIE Rosebank College.
 
+▶️ **[Watch the demo video on YouTube](https://www.youtube.com/watch?v=VqWli9sT0PE)** – every feature of the app on a real Android phone, with a voice-over.
+
 <p>
   <img src="docs/images/login.jpg" width="200" alt="Sign in">
   <img src="docs/images/dashboard.jpg" width="200" alt="Administrator dashboard">
@@ -180,6 +182,7 @@ The full list of test cases, with the manual tests and their results, is in
   in the code.
 
 ## Documentation
+- [Demo video (YouTube)](https://www.youtube.com/watch?v=VqWli9sT0PE)
 - [User manual](docs/user-manual.pdf) – step-by-step guide for every role, with labelled screenshots
 - [Test documentation](docs/testing.md)
 - [Database, ERD and test accounts](docs/database.md)
@@ -224,6 +227,6 @@ First complete version of the app, built from the Task 1 prototype and the exist
 | Member | Role in the project |
 |---|---|
 | Miguel Domingos | Tech lead: architecture, authentication and Google SSO, Supabase integration, CI/CD, code reviews |
-| Rolph | Database schema and seed data, Events and Attendance screens, testing |
-| Alexandra | Project management, Dashboard, Announcements, Notifications and Settings screens, demo video |
-| Avuzwa | Donations, Ministries, Activities, Reports and Help screens, documentation |
+| Rolph Rudolf | Database schema and seed data, Events and Attendance screens, testing |
+| Paule Alexandra | Project management, Dashboard, Announcements, Notifications and Settings screens, demo video |
+| Avuzwa Kwetana | Donations, Ministries, Activities, Reports and Help screens, documentation |
