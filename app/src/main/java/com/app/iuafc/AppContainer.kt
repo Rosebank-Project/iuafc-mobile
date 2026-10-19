@@ -35,6 +35,12 @@ import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
+/**
+ * Creates the repositories once and shares them with the whole app.
+ *
+ * When you add a repository for your feature (e.g. `EventRepository`), create it
+ * here and read it in your ViewModel factory with [appContainer].
+ */
 class AppContainer(
     private val context: Context,
     appScope: CoroutineScope,
@@ -126,9 +132,7 @@ class IuafcApplication : Application() {
     }
 }
 
-/**
- * Retrieves the application's shared AppContainer from ViewModel factories.
- */
+/** Use inside a `viewModelFactory { initializer { ... } }` to get the repositories. */
 val CreationExtras.appContainer: AppContainer
     get() {
         val application =
