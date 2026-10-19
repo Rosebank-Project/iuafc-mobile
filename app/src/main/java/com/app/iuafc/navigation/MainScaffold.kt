@@ -163,7 +163,7 @@ fun MainScaffold(
             }
 
             composable<EventsRoute> {
-                EventsScreen()
+                EventsScreen(user = user)
             }
 
             composable<AnnouncementsRoute> {
@@ -231,11 +231,11 @@ fun MainScaffold(
             }
 
             roleScreen(user, AppDestination.ATTENDANCE, AttendanceRoute::class) {
-                AttendanceScreen()
+                AttendanceScreen(user = user, onBack = back)
             }
 
             roleScreen(user, AppDestination.MY_ATTENDANCE, MyAttendanceRoute::class) {
-                MyAttendanceScreen(user = user)
+                MyAttendanceScreen(user = user, onBack = back)
             }
 
             roleScreen(user, AppDestination.DONATIONS, DonationsRoute::class) {

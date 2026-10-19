@@ -6,13 +6,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.app.iuafc.data.remote.SupabaseProvider
 import com.app.iuafc.data.repository.AnnouncementRepository
+import com.app.iuafc.data.repository.AttendanceRepository
 import com.app.iuafc.data.repository.ChurchFeaturesRepository
 import com.app.iuafc.data.repository.DashboardRepository
 import com.app.iuafc.data.repository.DemoSessionRepository
+import com.app.iuafc.data.repository.EventRepository
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.MockAnnouncementRepository
+import com.app.iuafc.data.repository.MockAttendanceRepository
 import com.app.iuafc.data.repository.MockChurchFeaturesRepository
 import com.app.iuafc.data.repository.MockDashboardRepository
+import com.app.iuafc.data.repository.MockEventRepository
 import com.app.iuafc.data.repository.MockMemberRepository
 import com.app.iuafc.data.repository.MockNotificationRepository
 import com.app.iuafc.data.repository.MockSettingsRepository
@@ -64,6 +68,14 @@ class AppContainer(
         MockNotificationRepository(
             announcementRepository = announcementRepository,
         )
+
+    // Events and registrations (mock until the Supabase repository is added)
+    val eventRepository: EventRepository =
+        MockEventRepository()
+
+    // Attendance captured by leaders and shown in My Attendance
+    val attendanceRepository: AttendanceRepository =
+        MockAttendanceRepository()
 
     val settingsRepository: SettingsRepository =
         MockSettingsRepository(

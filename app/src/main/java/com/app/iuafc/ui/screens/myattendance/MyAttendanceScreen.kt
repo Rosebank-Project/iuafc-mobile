@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.iuafc.data.model.AttendanceStatus
 import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.ScreenScaffold
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -40,13 +41,19 @@ import java.util.Locale
 @Composable
 fun MyAttendanceScreen(
     user: UserProfile,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyAttendanceViewModel = viewModel(factory = MyAttendanceViewModel.factory(user))
 ) {
     val attendanceList by viewModel.attendanceList.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
-    ScreenScaffold(title = "My Attendance", modifier = modifier) { padding ->
+    ScreenScaffold(
+        title = "My Attendance",
+        modifier = modifier,
+        onBack = onBack
+    ) { padding ->
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -54,6 +61,8 @@ fun MyAttendanceScreen(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (errorMessage != null) {
+            ErrorState(errorMessage!!, Modifier.padding(padding), onRetry = viewModel::loadMyAttendance)
         } else if (attendanceList.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),

@@ -2,52 +2,151 @@ package com.app.iuafc.ui.screens.attendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.iuafc.data.mock.MockData
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.Attendance
-import kotlinx.coroutines.delay
+import com.app.iuafc.data.model.AttendanceStatus
+import com.app.iuafc.data.model.Event
+import com.app.iuafc.data.model.Member
+import com.app.iuafc.data.model.Role
+import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.data.repository.AttendanceRepository
+import com.app.iuafc.data.repository.EventRepository
+import com.app.iuafc.data.repository.MemberRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// We create a UI model so we can show the Member's Name and Event's Name, not just their IDs
-data class AttendanceUiModel(
-    val attendance: Attendance,
-    val memberName: String,
-    val eventName: String
+data class AttendanceUiState(
+    val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val events: List<Event> = emptyList(),
+    val selectedEventId: String? = null,
+    val selectedEventDate: String? = null, // attendance is saved with the event's date
+    val members: List<Member> = emptyList(),
+    val attendanceMap: Map<String, AttendanceStatus?> = emptyMap(), // memberId -> status (null = not marked yet)
+    val errorMessage: String? = null,
+    val saveSuccess: Boolean = false
 )
 
-class AttendanceViewModel : ViewModel() {
+class AttendanceViewModel(
+    private val eventRepo: EventRepository,
+    private val memberRepo: MemberRepository,
+    private val attendanceRepo: AttendanceRepository,
+    private val user: UserProfile
+) : ViewModel() {
 
-    private val _attendanceList = MutableStateFlow<List<AttendanceUiModel>>(emptyList())
-    val attendanceList: StateFlow<List<AttendanceUiModel>> = _attendanceList.asStateFlow()
+    private val _uiState = MutableStateFlow(AttendanceUiState())
+    val uiState: StateFlow<AttendanceUiState> = _uiState.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val canManage: Boolean get() = user.role == Role.ADMINISTRATOR || user.role == Role.PASTOR || user.role == Role.MINISTRY_LEADER
 
     init {
-        loadAttendance()
+        loadInitialData()
     }
 
-    private fun loadAttendance() {
+    private fun loadInitialData() {
         viewModelScope.launch {
-            _isLoading.value = true
-            delay(500)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val events = eventRepo.getEvents()
+                var members = memberRepo.getMembers()
 
-            // Combine MockData.attendance with Member names and Event names
-            val combinedData = MockData.attendance.map { record ->
-                val member = MockData.memberName(record.memberId) ?: "Unknown Member"
-                val event = MockData.events.find { it.id == record.eventId }?.name ?: "Unknown Event"
+                // Ministry Leaders only capture attendance for their own ministry
+                if (user.role == Role.MINISTRY_LEADER && user.ministryId != null) {
+                    members = members.filter { it.ministryId == user.ministryId }
+                }
 
-                AttendanceUiModel(
-                    attendance = record,
-                    memberName = member,
-                    eventName = event
+                _uiState.update { it.copy(isLoading = false, events = events, members = members) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to load data.") }
+            }
+        }
+    }
+
+    fun selectEvent(eventId: String) {
+        val event = _uiState.value.events.find { it.id == eventId }
+        _uiState.update {
+            it.copy(
+                selectedEventId = eventId,
+                selectedEventDate = event?.date, // Store the event's date
+                saveSuccess = false,
+                errorMessage = null
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val existing = attendanceRepo.getAttendanceForEvent(eventId)
+                // Keep saved statuses; everyone else starts unmarked
+                val map = _uiState.value.members.associate { member ->
+                    val status = existing.find { it.memberId == member.id }?.status
+                    member.id to status
+                }
+                _uiState.update { it.copy(attendanceMap = map) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to load attendance records.") }
+            }
+        }
+    }
+
+    fun toggleStatus(memberId: String, status: AttendanceStatus?) {
+        val currentMap = _uiState.value.attendanceMap.toMutableMap()
+        currentMap[memberId] = status
+        _uiState.update { it.copy(attendanceMap = currentMap, saveSuccess = false, errorMessage = null) }
+    }
+
+    fun saveAttendance() {
+        val eventId = _uiState.value.selectedEventId ?: return
+        val eventDate = _uiState.value.selectedEventDate ?: return
+
+        // Every member needs a status before saving
+        if (_uiState.value.attendanceMap.values.any { it == null }) {
+            _uiState.update { it.copy(errorMessage = "Please mark all members Present or Absent before saving.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                val records = _uiState.value.attendanceMap.mapNotNull { (memberId, status) ->
+                    if (status == null) return@mapNotNull null
+                    Attendance(
+                        id = "att-${System.currentTimeMillis()}-$memberId",
+                        memberId = memberId,
+                        eventId = eventId,
+                        attendanceDate = eventDate,
+                        status = status
+                    )
+                }
+                attendanceRepo.saveAttendance(records)
+                _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isSaving = false, errorMessage = "Failed to save attendance.") }
+            }
+        }
+    }
+
+    companion object {
+        fun factory(user: UserProfile) = viewModelFactory {
+            initializer {
+                AttendanceViewModel(
+                    eventRepo = appContainer.eventRepository,
+                    memberRepo = appContainer.memberRepository,
+                    attendanceRepo = appContainer.attendanceRepository,
+                    user = user
                 )
             }
-
-            _attendanceList.value = combinedData
-            _isLoading.value = false
         }
     }
 }

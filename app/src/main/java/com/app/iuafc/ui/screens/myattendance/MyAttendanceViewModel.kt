@@ -1,14 +1,15 @@
-
 package com.app.iuafc.ui.screens.myattendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.app.iuafc.data.mock.MockData
+import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.Attendance
 import com.app.iuafc.data.model.UserProfile
-import kotlinx.coroutines.delay
+import com.app.iuafc.data.repository.AttendanceRepository
+import com.app.iuafc.data.repository.EventRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,11 @@ data class MyAttendanceUiModel(
     val eventName: String
 )
 
-class MyAttendanceViewModel(private val user: UserProfile) : ViewModel() {
+class MyAttendanceViewModel(
+    private val user: UserProfile,
+    private val attendanceRepo: AttendanceRepository,
+    private val eventRepo: EventRepository
+) : ViewModel() {
 
     private val _attendanceList = MutableStateFlow<List<MyAttendanceUiModel>>(emptyList())
     val attendanceList: StateFlow<List<MyAttendanceUiModel>> = _attendanceList.asStateFlow()
@@ -27,37 +32,48 @@ class MyAttendanceViewModel(private val user: UserProfile) : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     init {
         loadMyAttendance()
     }
 
-    private fun loadMyAttendance() {
+    fun loadMyAttendance() {
         viewModelScope.launch {
             _isLoading.value = true
-            delay(500)
+            _errorMessage.value = null
+            try {
+                if (user.memberId == null) {
+                    _attendanceList.value = emptyList()
+                } else {
+                    val myRecords = attendanceRepo.getAttendanceForMember(user.memberId)
+                    val allEvents = eventRepo.getEvents()
 
-            // Filter MockData so we only get the records for THIS user's memberId
-            val myRecords = MockData.attendance.filter {
-                user.memberId != null && it.memberId == user.memberId
+                    val combinedData = myRecords.map { record ->
+                        val event = allEvents.find { it.id == record.eventId }?.name ?: "Unknown Event"
+                        MyAttendanceUiModel(attendance = record, eventName = event)
+                    }
+                    _attendanceList.value = combinedData
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _errorMessage.value = "Could not load your attendance. Please try again."
+            } finally {
+                _isLoading.value = false
             }
-
-            val combinedData = myRecords.map { record ->
-                val event = MockData.events.find { it.id == record.eventId }?.name ?: "Unknown Event"
-                MyAttendanceUiModel(
-                    attendance = record,
-                    eventName = event
-                )
-            }
-
-            _attendanceList.value = combinedData
-            _isLoading.value = false
         }
     }
 
     companion object {
         fun factory(user: UserProfile) = viewModelFactory {
             initializer {
-                MyAttendanceViewModel(user)
+                MyAttendanceViewModel(
+                    user = user,
+                    attendanceRepo = appContainer.attendanceRepository,
+                    eventRepo = appContainer.eventRepository
+                )
             }
         }
     }
