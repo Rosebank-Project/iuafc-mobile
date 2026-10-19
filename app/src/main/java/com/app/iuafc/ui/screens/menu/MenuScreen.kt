@@ -33,6 +33,7 @@ import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.navigation.AppDestination
 import com.app.iuafc.ui.components.ScreenScaffold
+import com.app.iuafc.util.initialsOf
 import com.app.iuafc.ui.theme.IUAFCTheme
 
 /**
@@ -87,7 +88,7 @@ private fun ProfileHeader(user: UserProfile) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    initials(user.fullName),
+                    initialsOf(user.fullName),
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold,
                 )
@@ -115,8 +116,6 @@ private fun MenuRow(label: String, icon: ImageVector, onClick: () -> Unit) {
     )
 }
 
-private fun initials(name: String): String =
-    name.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }
 
 @Preview(showBackground = true)
 @Composable

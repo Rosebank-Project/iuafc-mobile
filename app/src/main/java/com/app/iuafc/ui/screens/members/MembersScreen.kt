@@ -51,6 +51,7 @@ import com.app.iuafc.data.model.Member
 import com.app.iuafc.ui.components.EmptyState
 import com.app.iuafc.ui.components.ErrorState
 import com.app.iuafc.ui.components.LoadingState
+import com.app.iuafc.util.initialsOf
 import com.app.iuafc.ui.components.ScreenScaffold
 
 /** Members screen (Administrator and Pastor). Only Administrators can add or edit. */
@@ -223,7 +224,7 @@ internal fun Initials(name: String, size: Int = 44) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            name.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() },
+            initialsOf(name),
             color = MaterialTheme.colorScheme.onPrimary,
             fontWeight = FontWeight.Bold,
         )

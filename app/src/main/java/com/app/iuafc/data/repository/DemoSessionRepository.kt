@@ -1,6 +1,7 @@
 
 package com.app.iuafc.data.repository
 
+import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,15 +22,19 @@ class DemoSessionRepository : SessionRepository {
 
     override val isDemo = true
 
+    /**
+     * Signs in as the sample user with this role (e.g. Church Member = Grace Adeyemi), so
+     * screens that depend on the user's member record or ministry also have data.
+     */
     override fun signInAsDemo(role: Role) {
-        _state.value = SessionState.SignedIn(
-            UserProfile(
+        val user = MockData.users.firstOrNull { it.role == role }
+            ?: UserProfile(
                 id = "demo-${role.name.lowercase()}",
                 fullName = "Demo ${role.displayName}",
                 email = "${role.name.lowercase()}@iuafc.demo",
                 role = role,
             )
-        )
+        _state.value = SessionState.SignedIn(user)
     }
 
     override fun updateCurrentUserFullName(
