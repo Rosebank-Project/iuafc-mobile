@@ -101,6 +101,7 @@ class SupabaseUserRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: PostgrestRestException) {
+            // The database function raises messages written for the user.
             SaveResult.Error(e.error)
         } catch (_: HttpRequestException) {
             SaveResult.Error(
