@@ -76,8 +76,9 @@ the repository.
 1. Supabase → **Authentication → Users → Add user → Create new user**, once for each email in
    `supabase/scripts/test-accounts.sql` (one per role, 10 in total), with **Auto Confirm User** ticked.
 2. Run `supabase/scripts/test-accounts.sql` in the **SQL Editor**. It sets each account's name and
-   role, links it to its member record or ministry, and makes the Ministry Leaders the leaders of
-   their ministries.
+   role, links it to its member record or ministry, makes the Ministry Leaders the leaders of
+   their ministries, and makes the test accounts the authors of the seeded events, announcements,
+   donations and activities.
 3. Share the passwords with the group privately (WhatsApp), never on GitHub.
 
 | Role | Email |
