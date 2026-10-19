@@ -24,12 +24,23 @@ import com.app.iuafc.data.repository.MockUserRepository
 import com.app.iuafc.data.repository.NotificationRepository
 import com.app.iuafc.data.repository.SessionRepository
 import com.app.iuafc.data.repository.SettingsRepository
+import com.app.iuafc.data.repository.SupabaseAnnouncementRepository
+import com.app.iuafc.data.repository.SupabaseAttendanceRepository
+import com.app.iuafc.data.repository.SupabaseChurchFeaturesRepository
+import com.app.iuafc.data.repository.SupabaseEventRepository
+import com.app.iuafc.data.repository.SupabaseMemberRepository
 import com.app.iuafc.data.repository.SupabaseSessionRepository
 import com.app.iuafc.data.repository.SupabaseUserRepository
 import com.app.iuafc.data.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
+/**
+ * Creates the repositories once and shares them with the whole app.
+ *
+ * When you add a repository for your feature (e.g. `EventRepository`), create it
+ * here and read it in your ViewModel factory with [appContainer].
+ */
 class AppContainer(
     private val context: Context,
     appScope: CoroutineScope,
@@ -45,37 +56,47 @@ class AppContainer(
             DemoSessionRepository()
         }
 
+    // Church data: Supabase tables when the keys are set, sample data in demo mode.
+    private val supabase = if (SupabaseProvider.isConfigured) SupabaseProvider.client else null
+
     // Ministries, activities and donations (Avuzwa's screens).
     val churchFeaturesRepository: ChurchFeaturesRepository =
-        MockChurchFeaturesRepository()
+        supabase?.let { SupabaseChurchFeaturesRepository(it) } ?: MockChurchFeaturesRepository()
 
-    // Reads ministries from churchFeaturesRepository so new ministries show up in Members.
+    // In demo mode members read the ministries from churchFeaturesRepository, so a new
+    // ministry shows up in the member form.
     val memberRepository: MemberRepository =
-        MockMemberRepository(churchFeaturesRepository = churchFeaturesRepository)
+        supabase?.let { SupabaseMemberRepository(it) }
+            ?: MockMemberRepository(churchFeaturesRepository = churchFeaturesRepository)
 
     // Shared announcement repository for the entire app.
     val announcementRepository: AnnouncementRepository =
-        MockAnnouncementRepository()
+        supabase?.let { SupabaseAnnouncementRepository(it) } ?: MockAnnouncementRepository()
 
-    // The dashboard uses the shared announcement repository.
-    val dashboardRepository: DashboardRepository =
-        MockDashboardRepository(
-            announcementRepository = announcementRepository,
-        )
-
-    // Notifications use the same announcements as the dashboard.
-    val notificationRepository: NotificationRepository =
-        MockNotificationRepository(
-            announcementRepository = announcementRepository,
-        )
-
-    // Events and registrations (mock until the Supabase repository is added)
+    // Events and registrations
     val eventRepository: EventRepository =
-        MockEventRepository()
+        supabase?.let { SupabaseEventRepository(it) } ?: MockEventRepository()
 
     // Attendance captured by leaders and shown in My Attendance
     val attendanceRepository: AttendanceRepository =
-        MockAttendanceRepository()
+        supabase?.let { SupabaseAttendanceRepository(it) } ?: MockAttendanceRepository()
+
+    // The dashboard and notifications are built from the repositories above.
+    val dashboardRepository: DashboardRepository =
+        MockDashboardRepository(
+            announcementRepository = announcementRepository,
+            memberRepository = memberRepository,
+            featuresRepository = churchFeaturesRepository,
+            eventRepository = eventRepository,
+            attendanceRepository = attendanceRepository,
+        )
+
+    val notificationRepository: NotificationRepository =
+        MockNotificationRepository(
+            announcementRepository = announcementRepository,
+            eventRepository = eventRepository,
+            featuresRepository = churchFeaturesRepository,
+        )
 
     val settingsRepository: SettingsRepository =
         MockSettingsRepository(
@@ -111,9 +132,7 @@ class IuafcApplication : Application() {
     }
 }
 
-/**
- * Retrieves the application's shared AppContainer from ViewModel factories.
- */
+/** Use inside a `viewModelFactory { initializer { ... } }` to get the repositories. */
 val CreationExtras.appContainer: AppContainer
     get() {
         val application =

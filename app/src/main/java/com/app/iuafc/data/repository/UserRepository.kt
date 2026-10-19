@@ -17,6 +17,12 @@ interface UserRepository {
     suspend fun getUsers(): List<UserProfile>
 
     /**
+     * Name and role of every account, for any signed-in user (who wrote an announcement,
+     * who leads a ministry). Emails are not included.
+     */
+    suspend fun getDirectory(): List<UserProfile> = getUsers()
+
+    /**
      * Changes the user's full name in their profile.
      */
     suspend fun updateFullName(
