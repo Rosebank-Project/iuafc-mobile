@@ -50,6 +50,7 @@ import com.app.iuafc.data.repository.DashboardSummary
 import com.app.iuafc.ui.common.UiState
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.app.iuafc.util.initialsOf
 import java.util.Locale
 
 @Composable
@@ -551,23 +552,6 @@ private fun statisticIconFor(
     }
 }
 
-private fun initialsFor(
-    fullName: String,
-): String {
-    val parts = fullName.trim()
-        .split("\\s+".toRegex())
-        .filter { it.isNotBlank() }
-
-    return when {
-        parts.size >= 2 ->
-            "${parts.first().first()}${parts.last().first()}".uppercase()
-
-        parts.size == 1 ->
-            parts.first().take(2).uppercase()
-
-        else -> "PJ"
-    }
-}
 
 private fun formatDate(
     value: String,

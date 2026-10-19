@@ -65,6 +65,7 @@ import com.app.iuafc.ui.screens.notifications.NotificationsScreen
 import com.app.iuafc.ui.screens.reports.ReportsScreen
 import com.app.iuafc.ui.screens.settings.SettingsScreen
 import com.app.iuafc.ui.screens.users.UsersScreen
+import com.app.iuafc.util.initialsOf
 import kotlin.reflect.KClass
 
 private val HeaderNavy = Color(0xFF112548)
@@ -336,7 +337,7 @@ private fun SharedChurchHeader(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = initialsFor(user.fullName),
+                            text = initialsOf(user.fullName),
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleSmall,
@@ -348,19 +349,6 @@ private fun SharedChurchHeader(
     }
 }
 
-private fun initialsFor(fullName: String): String {
-    val parts = fullName.trim()
-        .split("\\s+".toRegex())
-        .filter { it.isNotBlank() }
-
-    return when {
-        parts.size >= 2 ->
-            "${parts.first().first()}${parts.last().first()}".uppercase()
-
-        parts.size == 1 -> parts.first().take(2).uppercase()
-        else -> "?"
-    }
-}
 
 /**
  * Registers a screen that only some roles can open; others see "Access denied".
