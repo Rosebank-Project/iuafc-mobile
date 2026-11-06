@@ -52,4 +52,5 @@ jobs:
 
       - name: Apply migrations
         if: github.event_name != 'pull_request'
-        run: supabase db push --remote
+        # v3 asks for confirmation before changing the database; a workflow can't answer, so --yes
+        run: supabase db push --remote --yes
