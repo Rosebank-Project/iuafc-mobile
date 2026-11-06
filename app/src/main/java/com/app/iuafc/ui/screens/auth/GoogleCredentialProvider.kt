@@ -8,6 +8,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.app.iuafc.BuildConfig
+import com.app.iuafc.util.AppLog
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -44,24 +45,34 @@ object GoogleCredentialProvider {
             .build()
 
         return try {
+            AppLog.d(TAG, "Showing the Google account picker")
             val credential = CredentialManager.create(context).getCredential(context, request).credential
             if (credential is CustomCredential &&
                 credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
             ) {
+                AppLog.d(TAG, "Google returned an ID token")
                 GoogleCredentialResult.Success(GoogleIdTokenCredential.createFrom(credential.data).idToken, rawNonce)
             } else {
+                AppLog.w(TAG, "Unexpected credential type: ${credential.type}")
                 GoogleCredentialResult.Error("Google sign-in failed. Please try again.")
             }
         } catch (_: GetCredentialCancellationException) {
+            AppLog.d(TAG, "The user closed the Google account picker")
             GoogleCredentialResult.Cancelled
-        } catch (_: NoCredentialException) {
+        } catch (e: NoCredentialException) {
+            AppLog.w(TAG, "No Google account on this device", e)
             GoogleCredentialResult.Error("No Google account found. Add one in your phone's Settings > Accounts.")
-        } catch (_: GetCredentialException) {
+        } catch (e: GetCredentialException) {
+            // Usually the app's SHA-1 is not registered in Google Cloud (see docs/google-sign-in.md)
+            AppLog.e(TAG, "Credential Manager error: ${e.type}", e)
             GoogleCredentialResult.Error("Google sign-in failed. Please try again.")
-        } catch (_: GoogleIdTokenParsingException) {
+        } catch (e: GoogleIdTokenParsingException) {
+            AppLog.e(TAG, "Could not read the Google ID token", e)
             GoogleCredentialResult.Error("Google sign-in failed. Please try again.")
         }
     }
+
+    private const val TAG = "GoogleSignIn"
 
     private fun sha256(value: String): String =
         MessageDigest.getInstance("SHA-256")

@@ -9,6 +9,7 @@ import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.ChurchFeaturesRepository
 import com.app.iuafc.data.repository.SaveResult
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,8 @@ class ActivitiesViewModel(
             _uiState.update { it.copy(isLoading = false, activities = activities, ministries = ministries) }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "load failed", e)
             _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load activities. Please try again.") }
         }
     }
@@ -126,7 +128,8 @@ class ActivitiesViewModel(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "runSave failed", e)
             _uiState.update { it.copy(isSaving = false, errorMessage = "Could not save the activity. Please try again.") }
         }
     }
@@ -138,3 +141,5 @@ private fun parseDate(value: String): LocalDate? =
     } catch (_: DateTimeParseException) {
         null
     }
+
+private const val TAG = "Activities"

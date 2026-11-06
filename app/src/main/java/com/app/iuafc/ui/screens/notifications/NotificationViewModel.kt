@@ -8,6 +8,7 @@ import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.AppNotification
 import com.app.iuafc.data.repository.NotificationRepository
 import com.app.iuafc.ui.common.UiState
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +39,7 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "loadNotifications failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to load notifications.",
                 )
@@ -53,6 +55,7 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "markAsRead failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to update notification.",
                 )
@@ -68,6 +71,7 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "markAllAsRead failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to update notifications.",
                 )
@@ -85,3 +89,5 @@ class NotificationViewModel(
         }
     }
 }
+
+private const val TAG = "Notification"

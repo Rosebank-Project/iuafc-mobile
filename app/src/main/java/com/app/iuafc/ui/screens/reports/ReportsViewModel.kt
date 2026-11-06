@@ -16,6 +16,7 @@ import com.app.iuafc.data.repository.EventRepository
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.MockAttendanceRepository
 import com.app.iuafc.data.repository.MockEventRepository
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,7 +63,8 @@ class ReportsViewModel(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "load failed", e)
             _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load reports. Please try again.") }
         }
     }
@@ -80,3 +82,5 @@ class ReportsViewModel(
         }
     }
 }
+
+private const val TAG = "Reports"

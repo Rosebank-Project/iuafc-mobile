@@ -11,6 +11,7 @@ import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.ChurchFeaturesRepository
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.SaveResult
+import com.app.iuafc.util.AppLog
 import com.app.iuafc.util.Validators
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +57,8 @@ class DonationsViewModel(
             _uiState.update { it.copy(isLoading = false, donations = visible, members = members) }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "load failed", e)
             _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load donations. Please try again.") }
         }
     }
@@ -99,7 +101,8 @@ class DonationsViewModel(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "record failed", e)
             _uiState.update { it.copy(isSaving = false, errorMessage = "Could not record the donation. Please try again.") }
         }
     }
@@ -111,3 +114,5 @@ private fun parseDate(value: String): LocalDate? =
     } catch (_: DateTimeParseException) {
         null
     }
+
+private const val TAG = "Donations"

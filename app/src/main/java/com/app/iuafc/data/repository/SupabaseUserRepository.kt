@@ -4,6 +4,7 @@ package com.app.iuafc.data.repository
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.remote.DirectoryRow
+import com.app.iuafc.util.AppLog
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
@@ -48,6 +49,7 @@ class SupabaseUserRepository(
         }
 
         return try {
+            AppLog.d(TAG, "Updating the profile name")
             supabase.from("profiles").update(
                 {
                     set("full_name", cleanedName)
@@ -62,12 +64,15 @@ class SupabaseUserRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: PostgrestRestException) {
+            AppLog.w(TAG, "Name update refused by the database", e)
             SaveResult.Error(e.error)
-        } catch (_: HttpRequestException) {
+        } catch (e: HttpRequestException) {
+            AppLog.w(TAG, "Name update failed: no connection", e)
             SaveResult.Error(
                 "No internet connection. Check your connection and try again."
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "Name update failed", e)
             SaveResult.Error(
                 "Could not update your name. Please try again."
             )
@@ -81,6 +86,7 @@ class SupabaseUserRepository(
         ministryId: String?,
     ): SaveResult =
         try {
+            AppLog.d(TAG, "Changing the role of user $userId to ${role.displayName}")
             supabase.postgrest.rpc(
                 "set_user_role",
                 buildJsonObject {
@@ -106,18 +112,22 @@ class SupabaseUserRepository(
             throw e
         } catch (e: PostgrestRestException) {
             // The database function raises messages written for the user.
+            AppLog.w(TAG, "Role change refused by set_user_role", e)
             SaveResult.Error(e.error)
-        } catch (_: HttpRequestException) {
+        } catch (e: HttpRequestException) {
+            AppLog.w(TAG, "Role change failed: no connection", e)
             SaveResult.Error(
                 "No internet connection. Check your connection and try again."
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.e(TAG, "Role change failed", e)
             SaveResult.Error(
                 "Could not change the role. Please try again."
             )
         }
 
     companion object {
+        private const val TAG = "Users"
 
         /** Columns that match [UserProfile]. */
         val PROFILE_COLUMNS = Columns.list(

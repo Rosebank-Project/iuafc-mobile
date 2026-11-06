@@ -56,6 +56,10 @@ android {
         compose = true
         buildConfig = true
     }
+    // Unit tests run on the JVM, where android.util.Log is not available: AppLog calls do nothing there
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

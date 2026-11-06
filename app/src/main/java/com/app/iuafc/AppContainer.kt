@@ -32,6 +32,7 @@ import com.app.iuafc.data.repository.SupabaseMemberRepository
 import com.app.iuafc.data.repository.SupabaseSessionRepository
 import com.app.iuafc.data.repository.SupabaseUserRepository
 import com.app.iuafc.data.repository.UserRepository
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 
@@ -45,6 +46,13 @@ class AppContainer(
     private val context: Context,
     appScope: CoroutineScope,
 ) {
+
+    init {
+        AppLog.i(
+            "AppContainer",
+            if (SupabaseProvider.isConfigured) "Using Supabase" else "No Supabase keys: running in demo mode with sample data",
+        )
+    }
 
     val sessionRepository: SessionRepository =
         if (SupabaseProvider.isConfigured) {

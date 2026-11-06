@@ -11,6 +11,7 @@ import com.app.iuafc.data.model.Member
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.SaveResult
 import com.app.iuafc.navigation.MemberDetailRoute
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +53,8 @@ class MemberDetailViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "load failed", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load the member. Please try again.") }
             }
         }
@@ -78,3 +80,5 @@ class MemberDetailViewModel(
         }
     }
 }
+
+private const val TAG = "MemberDetail"

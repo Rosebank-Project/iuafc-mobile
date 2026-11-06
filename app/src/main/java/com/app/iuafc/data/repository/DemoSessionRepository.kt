@@ -4,6 +4,7 @@ package com.app.iuafc.data.repository
 import com.app.iuafc.data.mock.MockData
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,7 @@ class DemoSessionRepository : SessionRepository {
                 email = "${role.name.lowercase()}@iuafc.demo",
                 role = role,
             )
+        AppLog.i("Session", "Demo sign-in as ${role.displayName}")
         _state.value = SessionState.SignedIn(user)
     }
 

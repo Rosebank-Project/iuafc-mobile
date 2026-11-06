@@ -13,6 +13,7 @@ import com.app.iuafc.data.model.Ministry
 import com.app.iuafc.data.repository.MemberRepository
 import com.app.iuafc.data.repository.SaveResult
 import com.app.iuafc.navigation.MemberFormRoute
+import com.app.iuafc.util.AppLog
 import com.app.iuafc.util.Validators
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,7 +77,8 @@ class MemberFormViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "Loading the member form failed", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load the form. Please try again.") }
             }
         }
@@ -143,3 +145,5 @@ class MemberFormViewModel(
         }
     }
 }
+
+private const val TAG = "MemberForm"
