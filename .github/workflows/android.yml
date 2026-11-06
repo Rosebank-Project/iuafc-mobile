@@ -48,6 +48,15 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
 
+      # Checks that R8 (code shrinking) still builds the release version. It is not signed here:
+      # the release key never leaves the tech lead's computer (docs/release.md).
+      - name: Build the release bundle (R8)
+        run: ./gradlew bundleRelease
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

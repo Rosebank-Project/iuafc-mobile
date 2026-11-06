@@ -187,6 +187,7 @@ The full list of test cases, with the manual tests and their results, is in
 - [Test documentation](docs/testing.md)
 - [Database, ERD and test accounts](docs/database.md)
 - [App architecture](docs/architecture.md)
+- [Release build and Google Play](docs/release.md) – signed release, R8, uploading to Play
 - In-app **Help** screen (Menu → Help, or Settings → Help & Support)
 
 ## Release notes

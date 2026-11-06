@@ -1,21 +1,30 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# R8 rules for the release build (isMinifyEnabled = true).
+# Reference: Android Developers. 2026. Enable app optimization. [Online]. Available at:
+# https://developer.android.com/topic/performance/app-optimization/enable-app-optimization
+# [Accessed 6 November 2026].
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep line numbers in crash reports (Play Console de-obfuscates them with the mapping file).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Remove debug and verbose logs from release builds; warnings and errors are kept.
+-assumenosideeffects class android.util.Log {
+    public static int d(...);
+    public static int v(...);
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# kotlinx.serialization: keep the generated serializers of the @Serializable rows and models
+# (the library ships its own rules; these cover the app's classes).
+-keepattributes *Annotation*, InnerClasses, Signature, RuntimeVisibleAnnotations
+-keep,includedescriptorclasses class com.app.iuafc.**$$serializer { *; }
+-keepclassmembers class com.app.iuafc.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.app.iuafc.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Ktor and supabase-kt reference classes that are not used on Android.
+-dontwarn org.slf4j.**
+-dontwarn java.lang.management.**
+-dontwarn io.ktor.util.debug.**
