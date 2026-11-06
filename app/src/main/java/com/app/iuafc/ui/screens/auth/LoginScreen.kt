@@ -35,6 +35,21 @@ import com.app.iuafc.R
 import com.app.iuafc.ui.components.ValidatedTextField
 import kotlinx.coroutines.launch
 
+/**
+ * Sign-in screen: email and password, Continue with Google (single sign-on), and links to
+ * Register and Forgot password. Field errors appear under each field (from LoginViewModel) and
+ * nothing is sent to Supabase until the form is valid.
+ *
+ * Google sign-in: GoogleCredentialProvider shows the Android account picker and returns an ID
+ * token, which LoginViewModel sends to Supabase Auth.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ *
+ * Reference: Android Developers. 2026. Authenticate users with Sign in with Google. [Online].
+ * Available at: https://developer.android.com/identity/sign-in/credential-manager-siwg
+ * [Accessed 6 November 2026].
+ */
 @Composable
 fun LoginScreen(
     onRegister: () -> Unit,
@@ -118,6 +133,7 @@ fun LoginScreen(
     }
 }
 
+/** The "or" line between the email form and the Google button. */
 @Composable
 private fun OrDivider() {
     Row(

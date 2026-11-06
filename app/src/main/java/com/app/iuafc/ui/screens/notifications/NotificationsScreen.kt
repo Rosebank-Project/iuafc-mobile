@@ -36,6 +36,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * Notifications: new announcements, events and reviewed activities, newest first. Tapping one marks it as read; "Mark all as read" clears them all.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
@@ -165,6 +171,7 @@ fun NotificationsScreen(
     }
 }
 
+/** One notification with its icon, title, message, time and an unread dot. */
 @Composable
 private fun NotificationItem(
     notification: AppNotification,
@@ -230,6 +237,7 @@ private fun NotificationItem(
     }
 }
 
+/** Icon for each notification type. */
 private fun notificationIcon(
     type: NotificationType,
 ) = when (type) {
@@ -238,6 +246,7 @@ private fun notificationIcon(
     NotificationType.ActivityApproval -> Icons.Outlined.CheckCircle
 }
 
+/** Shows an ISO date-time as "04 Oct 2026, 09:00"; an unexpected value is shown as it is. */
 private fun formatTimestamp(value: String): String =
     try {
         LocalDateTime.parse(value).format(

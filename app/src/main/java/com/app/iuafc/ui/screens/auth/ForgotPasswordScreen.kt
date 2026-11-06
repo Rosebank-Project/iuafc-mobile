@@ -21,6 +21,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.iuafc.ui.components.ValidatedTextField
 
+/**
+ * Forgot Password: the user enters their email and receives a reset link from Supabase Auth. After sending, the screen confirms it and offers a way back to sign in.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun ForgotPasswordScreen(
     onBackToLogin: () -> Unit,

@@ -55,8 +55,16 @@ import com.app.iuafc.ui.components.ScreenScaffold
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+/** Colour of the delete icon and the confirm-delete button. */
 private val DeleteRed = Color(0xFFD92D35)
 
+/**
+ * Announcements: everyone reads them; Administrators and Pastors can post, edit and delete
+ * (with a confirmation before deleting). The author's name comes from the user directory.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun AnnouncementsScreen(
     user: UserProfile,
@@ -345,6 +353,7 @@ fun AnnouncementsScreen(
     }
 }
 
+/** One announcement with its date, author and, for managers, the edit and delete buttons. */
 @Composable
 private fun AnnouncementCard(
     announcement: Announcement,
@@ -438,6 +447,7 @@ private fun AnnouncementCard(
     }
 }
 
+/** Dialog to write a new announcement or edit one ([announcement] is null for a new one). Title and message are required. */
 @Composable
 private fun AnnouncementDialog(
     announcement: Announcement?,
@@ -552,6 +562,7 @@ private fun AnnouncementDialog(
     )
 }
 
+/** Shows yyyy-MM-dd as "Sunday, Oct 4, 2026"; an unexpected value is shown as it is. */
 private fun formatDate(value: String): String {
     return try {
         LocalDate.parse(value).format(

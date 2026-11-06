@@ -21,6 +21,14 @@ import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.ui.components.ScreenScaffold
 import com.app.iuafc.ui.components.DropdownField
 
+/**
+ * Capture Attendance: pick an event, mark each member Present or Absent and save.
+ * Administrators and Pastors see every member; a Ministry Leader only sees the members of their
+ * own ministry (filtered in AttendanceViewModel). Every member must be marked before saving.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun AttendanceScreen(
     user: UserProfile,
@@ -95,6 +103,7 @@ fun AttendanceScreen(
     }
 }
 
+/** One member with Present and Absent chips. The selected chip uses the primary (Present) or error (Absent) colour. */
 @Composable
 private fun AttendanceRow(
     memberName: String,

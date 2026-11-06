@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Notifications built from the announcements, events and reviewed activities (see
+ * NotificationRepository), with read and unread state.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class NotificationViewModel(
     private val repository: NotificationRepository,
 ) : ViewModel() {
@@ -31,6 +38,7 @@ class NotificationViewModel(
         loadNotifications()
     }
 
+    /** Loads the notifications. Also used by "Try again". */
     fun loadNotifications() {
         viewModelScope.launch {
             try {
@@ -47,6 +55,7 @@ class NotificationViewModel(
         }
     }
 
+    /** Marks one notification as read (when the user taps it). */
     fun markAsRead(notificationId: String) {
         viewModelScope.launch {
             try {
@@ -63,6 +72,7 @@ class NotificationViewModel(
         }
     }
 
+    /** Marks every notification as read. */
     fun markAllAsRead() {
         viewModelScope.launch {
             try {

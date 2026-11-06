@@ -28,6 +28,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.iuafc.ui.components.ValidatedTextField
 import com.app.iuafc.util.Validators
 
+/**
+ * Register: full name, email, password and confirmation. The password must have at least 8
+ * characters with letters and numbers (Validators.password) and both passwords must match.
+ * Supabase Auth stores only a bcrypt hash of the password. New accounts start as Church Member.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun RegisterScreen(
     onBackToLogin: () -> Unit,

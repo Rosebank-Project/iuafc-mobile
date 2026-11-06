@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** What the Forgot Password screen shows: the email field, its error, and whether the link was sent. */
 data class ForgotPasswordUiState(
     val email: String = "",
     val emailError: String? = null,
@@ -22,14 +23,23 @@ data class ForgotPasswordUiState(
     val emailSent: Boolean = false,
 )
 
+/**
+ * Sends a password reset link by email (Supabase Auth). The email is checked with
+ * [Validators.email] first, so no request is made for an invalid address.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class ForgotPasswordViewModel(private val session: SessionRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ForgotPasswordUiState())
     val uiState: StateFlow<ForgotPasswordUiState> = _uiState.asStateFlow()
 
+    /** Updates the email and clears the previous errors. */
     fun onEmailChange(value: String) =
         _uiState.update { it.copy(email = value, emailError = null, errorMessage = null) }
 
+    /** Validates the email and asks Supabase to send the reset link. Ignored while a request is running. */
     fun sendResetLink() {
         val current = _uiState.value
         if (current.isLoading) return
