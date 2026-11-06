@@ -37,7 +37,9 @@ jobs:
       - name: Set up the Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: "latest" can change behaviour (v3 made db push local by default) and
+          # resolving it can hit GitHub's API rate limit.
+          version: 3.0.0
 
       - name: Link the Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
