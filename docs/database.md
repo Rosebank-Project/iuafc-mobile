@@ -60,6 +60,8 @@ Passwords are never stored in these tables: Supabase Auth keeps them hashed in `
 | `20261003140000_interactions.sql` | `announcements`, `event_registrations`, `ministry_activities` |
 | `20261018120000_align_tables_with_app.sql` | renames and adds columns so every table matches the app; approval workflow for activities |
 | `20261018170000_seed_data.sql` | sample data (below) |
+| `20261019090000_shared_access_for_screens.sql` | `profile_directory()` (names and roles without emails) and the read access the screens need |
+| `20261106120000_delete_own_account.sql` | `delete_my_account()`: a user deletes their own account (app Settings or website); the only Administrator can't |
 
 ## Seed data
 

@@ -14,6 +14,7 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -172,6 +173,17 @@ class SupabaseSessionRepository(
             // Offline: the local session is cleared anyway.
             AppLog.w(TAG, "Sign-out request failed, local session cleared", e)
         }
+    }
+
+    override suspend fun deleteAccount(): AuthResult = attempt("Account deletion", AuthResult::Error) {
+        AppLog.i(TAG, "Deleting the signed-in account")
+        // The database function deletes the auth user (and their profile) and refuses to delete
+        // the only Administrator. See supabase/migrations/20261106120000_delete_own_account.sql.
+        supabase.postgrest.rpc("delete_my_account")
+        // The account no longer exists, so only the session saved on the phone is removed.
+        supabase.auth.clearSession()
+        AppLog.i(TAG, "Account deleted")
+        AuthResult.Success
     }
 
     /**

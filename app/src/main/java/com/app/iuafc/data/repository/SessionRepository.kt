@@ -78,6 +78,12 @@ interface SessionRepository {
     suspend fun signOut()
 
     /**
+     * Permanently deletes the signed-in user's account (Google Play requires apps with accounts
+     * to offer this) and signs them out. Records they created stay without their name.
+     */
+    suspend fun deleteAccount(): AuthResult
+
+    /**
      * Updates the name in the active session after the profile save succeeds.
      * This does not save the name to the database.
      */

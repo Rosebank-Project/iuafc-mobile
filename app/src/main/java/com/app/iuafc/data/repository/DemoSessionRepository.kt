@@ -79,6 +79,12 @@ class DemoSessionRepository : SessionRepository {
         _state.value = SessionState.SignedOut
     }
 
+    // Demo accounts are sample data, so "deleting" one just signs out.
+    override suspend fun deleteAccount(): AuthResult {
+        _state.value = SessionState.SignedOut
+        return AuthResult.Success
+    }
+
     private companion object {
 
         const val NOT_CONFIGURED =
