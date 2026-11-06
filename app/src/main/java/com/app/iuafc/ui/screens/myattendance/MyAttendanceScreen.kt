@@ -38,6 +38,12 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * My Attendance (Church Member): the events the member attended or missed, with loading, empty and error states.
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun MyAttendanceScreen(
     user: UserProfile,
@@ -88,6 +94,7 @@ fun MyAttendanceScreen(
     }
 }
 
+/** One attendance record: event name, date and a Present or Absent badge. */
 @Composable
 private fun MyAttendanceCard(item: MyAttendanceUiModel) {
     Card(
@@ -143,6 +150,7 @@ private fun MyAttendanceCard(item: MyAttendanceUiModel) {
     }
 }
 
+/** Shows yyyy-MM-dd as "Oct 4, 2026"; an unexpected value is shown as it is. */
 private fun formatDate(value: String): String {
     return try {
         LocalDate.parse(value).format(

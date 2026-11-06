@@ -22,6 +22,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
+/**
+ * Donations screen state. [saveVersion] goes up after every successful save, so the screen knows
+ * when to close its dialog and clear the form.
+ */
 data class DonationsUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -31,6 +35,14 @@ data class DonationsUiState(
     val members: List<Member> = emptyList(),
 )
 
+/**
+ * Donations: Finance Officers and Administrators record tithes, offerings and donations; the
+ * database gives each one the next receipt number (RCP-1001, RCP-1002, ...). Pastors can view them,
+ * and a Church Member only gets their own donations from the database (Row Level Security).
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class DonationsViewModel(
     private val user: UserProfile,
     private val repository: ChurchFeaturesRepository,
@@ -38,12 +50,15 @@ class DonationsViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DonationsUiState())
     val uiState: StateFlow<DonationsUiState> = _uiState.asStateFlow()
+    /** The Record donation button is only shown to Administrators and Finance Officers. */
     val canRecord: Boolean get() = user.role == Role.ADMINISTRATOR || user.role == Role.FINANCE_OFFICER
 
+    /** Hides the error message after it was shown. */
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    /** Loads the donations and the members (for the member picker). */
     fun load() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = it.donations.isEmpty(), errorMessage = null) }
         try {
@@ -63,6 +78,10 @@ class DonationsViewModel(
         }
     }
 
+    /**
+     * Records a donation after checking the member, an amount greater than zero (a comma is accepted
+     * as the decimal separator) and a date that is not in the future.
+     */
     fun record(
         memberId: String,
         amountText: String,
@@ -108,6 +127,7 @@ class DonationsViewModel(
     }
 }
 
+// Dates come from the date picker as yyyy-MM-dd; anything else is treated as no date.
 private fun parseDate(value: String): LocalDate? =
     try {
         LocalDate.parse(value)

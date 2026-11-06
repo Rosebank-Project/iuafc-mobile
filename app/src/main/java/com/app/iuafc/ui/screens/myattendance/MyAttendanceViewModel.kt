@@ -16,11 +16,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** One row of My Attendance: the record and the name of its event. */
 data class MyAttendanceUiModel(
     val attendance: Attendance,
     val eventName: String
 )
 
+/**
+ * A Church Member's own attendance history. The records only hold the event id, so they are
+ * joined with the events to show the event name. An account that is not linked to a member
+ * record (see Users) has no attendance.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class MyAttendanceViewModel(
     private val user: UserProfile,
     private val attendanceRepo: AttendanceRepository,
@@ -40,6 +49,7 @@ class MyAttendanceViewModel(
         loadMyAttendance()
     }
 
+    /** Loads the member's records and the events, and combines them. Also used by "Try again". */
     fun loadMyAttendance() {
         viewModelScope.launch {
             _isLoading.value = true

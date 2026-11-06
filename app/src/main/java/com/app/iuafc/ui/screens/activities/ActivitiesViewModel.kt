@@ -19,6 +19,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
+/**
+ * Ministry Activities screen state. [saveVersion] goes up after every successful save, so the screen knows
+ * when to close its dialog and clear the form.
+ */
 data class ActivitiesUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -28,19 +32,31 @@ data class ActivitiesUiState(
     val ministries: List<Ministry> = emptyList(),
 )
 
+/**
+ * Ministry activity workflow: a Ministry Leader proposes an activity for their own ministry,
+ * it starts as Pending, and an Administrator or Pastor approves or rejects it with a note.
+ * The same rules are checked here (for clear messages) and by Row Level Security in the database.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class ActivitiesViewModel(
     private val user: UserProfile,
     private val repository: ChurchFeaturesRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ActivitiesUiState())
     val uiState: StateFlow<ActivitiesUiState> = _uiState.asStateFlow()
+    /** Approve and Reject are only shown to Administrators and Pastors. */
     val canReview: Boolean get() = user.role == Role.ADMINISTRATOR || user.role == Role.PASTOR
+    /** Only Ministry Leaders can propose activities. */
     val canSubmit: Boolean get() = user.role == Role.MINISTRY_LEADER
 
+    /** Hides the error message after it was shown. */
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    /** Loads the activities and the ministries (for the ministry picker). */
     fun load() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = it.activities.isEmpty(), errorMessage = null) }
         try {
@@ -55,6 +71,7 @@ class ActivitiesViewModel(
         }
     }
 
+    /** A Ministry Leader only sees their ministry's activities; reviewers see all. Sorted by date, then title. */
     fun visibleActivities(): List<MinistryActivity> {
         val activities = _uiState.value.activities
         return if (user.role == Role.MINISTRY_LEADER) {
@@ -64,6 +81,10 @@ class ActivitiesViewModel(
         }.sortedWith(compareBy<MinistryActivity> { it.proposedDate }.thenBy { it.title })
     }
 
+    /**
+     * Proposes a new activity after checking: every field filled in, a valid date that is not in
+     * the past, and the leader's own ministry.
+     */
     fun submit(ministryId: String, title: String, description: String, date: String, venue: String) =
         viewModelScope.launch {
             if (!canSubmit) {
@@ -100,6 +121,7 @@ class ActivitiesViewModel(
             runSave { repository.saveActivity(activity) }
         }
 
+    /** Approves or rejects a Pending activity. The reviewer and the time are recorded. */
     fun review(activity: MinistryActivity, status: ActivityStatus, note: String) = viewModelScope.launch {
         if (!canReview || activity.status != ActivityStatus.Pending ||
             status == ActivityStatus.Pending
@@ -116,6 +138,7 @@ class ActivitiesViewModel(
         runSave { repository.reviewActivity(reviewed) }
     }
 
+    // Runs a save and, if it worked, reloads the activities so the list shows the new status.
     private suspend fun runSave(operation: suspend () -> SaveResult) {
         _uiState.update { it.copy(isSaving = true, errorMessage = null) }
         try {
@@ -135,6 +158,7 @@ class ActivitiesViewModel(
     }
 }
 
+// Dates come from the date picker as yyyy-MM-dd; anything else is treated as no date.
 private fun parseDate(value: String): LocalDate? =
     try {
         LocalDate.parse(value)

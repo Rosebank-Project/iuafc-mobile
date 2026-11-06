@@ -46,6 +46,12 @@ import com.app.iuafc.ui.components.LoadingState
 import com.app.iuafc.ui.components.ScreenScaffold
 import com.app.iuafc.ui.components.toDisplayDate
 
+/**
+ * Details of one member, opened from the Members list. Administrators also get an Edit button ([canManage]).
+ *
+ * Reference: Android Developers. 2026. Thinking in Compose. [Online]. Available at:
+ * https://developer.android.com/develop/ui/compose/mental-model [Accessed 6 November 2026].
+ */
 @Composable
 fun MemberDetailScreen(
     onBack: () -> Unit,
@@ -97,6 +103,7 @@ fun MemberDetailScreen(
     }
 }
 
+/** The member's details: gender, dates, contact details, address and ministry. */
 @Composable
 private fun MemberDetails(member: Member, ministryName: String?, errorMessage: String?, modifier: Modifier) {
     Column(
@@ -142,6 +149,7 @@ private fun MemberDetails(member: Member, ministryName: String?, errorMessage: S
     }
 }
 
+/** One labelled line with an icon (gender, dates, contact details, ministry). */
 @Composable
 private fun DetailRow(icon: ImageVector, label: String, value: String) {
     ListItem(

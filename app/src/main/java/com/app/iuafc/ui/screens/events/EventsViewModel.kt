@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** Events screen state. [registeredEventIds] are the events the signed-in member registered for. */
 data class EventsUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -25,6 +26,14 @@ data class EventsUiState(
     val registeredEventIds: List<String> = emptyList()
 )
 
+/**
+ * Events: everyone sees them, Church Members register or unregister, and Administrators and
+ * Pastors create, edit and delete them. After every change the list is loaded again, so the
+ * screen always shows what is in the database.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class EventsViewModel(
     private val repository: EventRepository,
     private val user: UserProfile
@@ -33,13 +42,16 @@ class EventsViewModel(
     private val _uiState = MutableStateFlow(EventsUiState())
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
 
+    /** Create, edit and delete buttons are only shown to Administrators and Pastors. */
     val canManage: Boolean get() = user.role == Role.ADMINISTRATOR || user.role == Role.PASTOR
+    /** Only a Church Member linked to a member record can register. */
     val canRegister: Boolean get() = user.role == Role.CHURCH_MEMBER && user.memberId != null
 
     init {
         loadEvents()
     }
 
+    /** Loads the events and, for a member, the ids of the events they registered for. */
     fun loadEvents() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -59,6 +71,7 @@ class EventsViewModel(
         }
     }
 
+    /** Registers the member for [eventId], or unregisters them if they were already registered. */
     fun toggleRegistration(eventId: String) {
         if (!canRegister || user.memberId == null) return
         viewModelScope.launch {
@@ -80,6 +93,7 @@ class EventsViewModel(
         }
     }
 
+    /** Deletes an event (the screen asks for confirmation first). */
     fun deleteEvent(eventId: String) {
         if (!canManage) return
         viewModelScope.launch {
@@ -95,6 +109,7 @@ class EventsViewModel(
         }
     }
 
+    /** Saves a new event. The form has already checked the fields and blocked past dates. */
     fun createEvent(event: Event) {
         if (!canManage) return
         viewModelScope.launch {
@@ -110,6 +125,7 @@ class EventsViewModel(
         }
     }
 
+    /** Saves the changes to an existing event. */
     fun updateEvent(event: Event) {
         if (!canManage) return
         viewModelScope.launch {

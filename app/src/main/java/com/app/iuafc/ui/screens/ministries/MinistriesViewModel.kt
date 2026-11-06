@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Ministries screen state. [saveVersion] goes up after every successful save, so the screen knows
+ * when to close its dialog and clear the form.
+ */
 data class MinistriesUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -27,6 +31,14 @@ data class MinistriesUiState(
     val users: List<UserProfile> = emptyList(),
 )
 
+/**
+ * Ministries and their leaders. Everyone who can open the screen sees them; only Administrators
+ * add or edit them. Leader names come from `profile_directory()`, which returns names and roles
+ * without emails.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class MinistriesViewModel(
     private val repository: ChurchFeaturesRepository,
     private val userRepository: UserRepository,
@@ -34,10 +46,12 @@ class MinistriesViewModel(
     private val _uiState = MutableStateFlow(MinistriesUiState())
     val uiState: StateFlow<MinistriesUiState> = _uiState.asStateFlow()
 
+    /** Hides the error message after it was shown. */
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    /** Loads the ministries and the user directory used to show and pick leaders. */
     fun load() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = it.ministries.isEmpty(), errorMessage = null) }
         try {
@@ -52,6 +66,7 @@ class MinistriesViewModel(
         }
     }
 
+    /** Adds or updates a ministry. The name is required and must be unique (checked by the database). */
     fun save(ministry: Ministry) = viewModelScope.launch {
         if (ministry.name.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Enter a ministry name.") }

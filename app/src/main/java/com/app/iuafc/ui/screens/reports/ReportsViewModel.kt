@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** The raw data the reports are calculated from (totals and charts are worked out in ReportsScreen). */
 data class ReportsUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
@@ -34,6 +35,15 @@ data class ReportsUiState(
     val attendance: List<Attendance> = emptyList(),
 )
 
+/**
+ * Loads everything the Reports screen needs: members, ministries, donations, events and attendance.
+ * Administrators and Pastors can open it; Row Level Security lets them read every table used here.
+ *
+ * The event and attendance repositories default to the mock versions so older tests still compile.
+ *
+ * Reference: Android Developers. 2026. ViewModel overview. [Online]. Available at:
+ * https://developer.android.com/topic/libraries/architecture/viewmodel [Accessed 6 November 2026].
+ */
 class ReportsViewModel(
     private val featureRepository: ChurchFeaturesRepository,
     private val memberRepository: MemberRepository,
@@ -43,6 +53,10 @@ class ReportsViewModel(
     private val _uiState = MutableStateFlow(ReportsUiState())
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
 
+    /**
+     * Loads (or reloads) all the data. The loading spinner only shows the first time, so a refresh
+     * keeps the current report on screen.
+     */
     fun load() = viewModelScope.launch {
         _uiState.update { it.copy(isLoading = it.members.isEmpty(), errorMessage = null) }
         try {
