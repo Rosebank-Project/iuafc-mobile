@@ -37,15 +37,19 @@ jobs:
       - name: Set up the Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: "latest" can change behaviour (v3 made db push local by default) and
+          # resolving it can hit GitHub's API rate limit.
+          version: 3.0.0
 
       - name: Link the Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
 
+      # Newer Supabase CLI versions push to a local database unless --remote is given,
+      # so the linked project is named explicitly.
       - name: List pending migrations (dry run)
         if: github.event_name == 'pull_request'
-        run: supabase db push --dry-run
+        run: supabase db push --remote --dry-run
 
       - name: Apply migrations
         if: github.event_name != 'pull_request'
-        run: supabase db push
+        run: supabase db push --remote

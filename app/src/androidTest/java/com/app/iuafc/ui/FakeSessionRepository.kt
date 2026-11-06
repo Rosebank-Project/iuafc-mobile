@@ -25,5 +25,7 @@ class FakeSessionRepository : SessionRepository {
     override suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthResult = AuthResult.Success
     override suspend fun sendPasswordReset(email: String): AuthResult = AuthResult.Success
     override suspend fun signOut() = Unit
+
+    override suspend fun deleteAccount(): AuthResult = AuthResult.Success
     override fun updateCurrentUserFullName(userId: String, fullName: String) = Unit
 }

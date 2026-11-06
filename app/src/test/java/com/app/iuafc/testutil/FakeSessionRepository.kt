@@ -24,6 +24,10 @@ class FakeSessionRepository : SessionRepository {
     var signUpResult: SignUpResult = SignUpResult.SignedIn
     var resetResult: AuthResult = AuthResult.Success
     var googleResult: AuthResult = AuthResult.Success
+    var deleteResult: AuthResult = AuthResult.Success
+
+    var deleteCalls = 0
+        private set
 
     var signInCalls = 0
         private set
@@ -93,6 +97,12 @@ class FakeSessionRepository : SessionRepository {
 
     override suspend fun signOut() {
         _state.value = SessionState.SignedOut
+    }
+
+    override suspend fun deleteAccount(): AuthResult {
+        deleteCalls++
+        if (deleteResult == AuthResult.Success) _state.value = SessionState.SignedOut
+        return deleteResult
     }
 
     override fun updateCurrentUserFullName(

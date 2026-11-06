@@ -63,6 +63,14 @@ class SettingsViewModel(
     val isThemeLoading: StateFlow<Boolean> =
         _isThemeLoading.asStateFlow()
 
+    private val _isDeletingAccount = MutableStateFlow(false)
+    val isDeletingAccount: StateFlow<Boolean> =
+        _isDeletingAccount.asStateFlow()
+
+    private val _deleteAccountError = MutableStateFlow<String?>(null)
+    val deleteAccountError: StateFlow<String?> =
+        _deleteAccountError.asStateFlow()
+
     fun loadProfile(user: UserProfile) {
         viewModelScope.launch {
             _isProfileLoading.value = true
@@ -312,6 +320,39 @@ class SettingsViewModel(
                     "We couldn't sign you out. Please try again."
             }
         }
+    }
+
+    /**
+     * Deletes the user's account. On success the session ends and the app returns to the
+     * sign-in screen by itself; on failure (for example, the only Administrator) the reason
+     * is shown in the confirmation dialog.
+     */
+    fun deleteAccount() {
+        if (_isDeletingAccount.value) return
+
+        viewModelScope.launch {
+            _isDeletingAccount.value = true
+            _deleteAccountError.value = null
+
+            try {
+                val result = sessionRepository.deleteAccount()
+                if (result is AuthResult.Error) {
+                    _deleteAccountError.value = result.message
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                AppLog.e(TAG, "deleteAccount failed", e)
+                _deleteAccountError.value =
+                    "We couldn't delete your account. Please try again."
+            } finally {
+                _isDeletingAccount.value = false
+            }
+        }
+    }
+
+    fun clearDeleteAccountError() {
+        _deleteAccountError.value = null
     }
 
     companion object {

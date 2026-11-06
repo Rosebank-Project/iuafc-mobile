@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
@@ -26,7 +27,10 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -112,6 +116,12 @@ fun SettingsScreen(
     val isThemeLoading by
     viewModel.isThemeLoading.collectAsStateWithLifecycle()
 
+    val isDeletingAccount by
+    viewModel.isDeletingAccount.collectAsStateWithLifecycle()
+
+    val deleteAccountError by
+    viewModel.deleteAccountError.collectAsStateWithLifecycle()
+
     var fullName by remember(user.id) {
         mutableStateOf(user.fullName)
     }
@@ -133,6 +143,10 @@ fun SettingsScreen(
     }
 
     var showHelp by remember {
+        mutableStateOf(false)
+    }
+
+    var showDeleteAccount by remember {
         mutableStateOf(false)
     }
 
@@ -628,6 +642,28 @@ fun SettingsScreen(
                 Text("Sign Out")
             }
 
+            // Delete account (required by Google Play for apps with accounts)
+
+            TextButton(
+                onClick = {
+                    viewModel.clearDeleteAccountError()
+                    showDeleteAccount = true
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DeleteForever,
+                    contentDescription = null,
+                )
+
+                Spacer(Modifier.size(8.dp))
+
+                Text("Delete account")
+            }
+
             Spacer(Modifier.height(20.dp))
         }
 
@@ -696,6 +732,19 @@ fun SettingsScreen(
             )
         }
 
+        // DELETE ACCOUNT CONFIRMATION
+
+        if (showDeleteAccount) {
+            DeleteAccountDialog(
+                isDeleting = isDeletingAccount,
+                errorMessage = deleteAccountError,
+                onConfirm = viewModel::deleteAccount,
+                onDismiss = {
+                    if (!isDeletingAccount) showDeleteAccount = false
+                },
+            )
+        }
+
         // HELP BUBBLE
 
         if (showHelp) {
@@ -712,6 +761,72 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+/**
+ * Asks the user to confirm before their account is deleted for good. While the request runs the
+ * dialog can't be closed; if it fails (for example, the only Administrator) the reason is shown.
+ */
+@Composable
+private fun DeleteAccountDialog(
+    isDeleting: Boolean,
+    errorMessage: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.DeleteForever,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
+        title = { Text("Delete your account?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Your account and profile will be deleted and you will be signed out. " +
+                        "This can't be undone.",
+                )
+                Text(
+                    "Church records stay, such as your member record, donations and attendance, " +
+                        "but no longer show your account.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (errorMessage != null) {
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isDeleting,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onError,
+                    )
+                } else {
+                    Text("Delete")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @Composable
