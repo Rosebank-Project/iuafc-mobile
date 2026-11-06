@@ -42,10 +42,12 @@ jobs:
       - name: Link the Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
 
+      # Newer Supabase CLI versions push to a local database unless --remote is given,
+      # so the linked project is named explicitly.
       - name: List pending migrations (dry run)
         if: github.event_name == 'pull_request'
-        run: supabase db push --dry-run
+        run: supabase db push --remote --dry-run
 
       - name: Apply migrations
         if: github.event_name != 'pull_request'
-        run: supabase db push
+        run: supabase db push --remote
