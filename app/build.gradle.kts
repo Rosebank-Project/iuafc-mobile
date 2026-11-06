@@ -28,8 +28,9 @@ android {
         applicationId = "com.app.iuafc"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Raise both for every release uploaded to Google Play (see the release notes in the README)
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

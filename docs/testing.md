@@ -11,6 +11,7 @@ run on the emulator against the real Supabase database, and the bugs those tests
 - [6. Database security tests](#6-database-security-tests)
 - [7. Bugs found and fixed](#7-bugs-found-and-fixed)
 - [8. Testing on a real phone](#8-testing-on-a-real-phone)
+- [9. Version 1.1: account deletion, logging and the release build](#9-version-11-account-deletion-logging-and-the-release-build)
 
 ## 1. Approach
 
@@ -26,9 +27,9 @@ Test accounts (one per role) are described in [database.md](database.md#test-acc
 
 ## 2. Automated tests
 
-**87 automated tests: 81 unit tests and 6 UI tests.** All pass on `main`.
+**90 automated tests: 84 unit tests and 6 UI tests.** All pass on `main`.
 
-### Unit tests – `app/src/test` (81)
+### Unit tests – `app/src/test` (84)
 
 | Test class | What it checks | Tests |
 |---|---|---|
@@ -49,6 +50,7 @@ Test accounts (one per role) are described in [database.md](database.md#test-acc
 | `ui/screens/features/ChurchFeatureViewModelsTest` | Zero amount rejected and receipt issued, members see only their donations, leaders can't submit for another ministry or a past date, Pastor reviews pending activities, duplicate ministry names, reports load | 6 |
 | `ui/screens/features/EventsViewModelTest` | Events load, a Church Member registers for an event | 2 |
 | `ui/screens/features/AttendanceViewModelTest` | Present and Absent statuses saved for the event | 1 |
+| `ui/screens/settings/SettingsViewModelTest` | Deleting the account signs out; when the database refuses (the only Administrator) its reason is shown; the message can be cleared | 3 |
 
 ### UI tests – `app/src/androidTest` (6)
 
@@ -72,20 +74,22 @@ Run them locally:
 
 | Workflow | Jobs | Trigger |
 |---|---|---|
-| [Android CI](../.github/workflows/android.yml) | **Unit tests and build** – runs the unit tests, builds the debug APK, uploads the test reports and APK. **UI tests (emulator)** – starts an API 34 emulator and runs the UI tests. | Every pull request and every push to `main` |
-| [Database migrations](../.github/workflows/database.yml) | **Check migrations (dry run)** on pull requests; **Apply migrations** to Supabase on `main` | Pull requests and pushes that change `supabase/` |
+| [Android CI](../.github/workflows/android.yml) | **Unit tests and build** – runs the unit tests, builds the debug APK and the release bundle (checks that R8 still works), uploads the test reports and APK. **UI tests (emulator)** – starts an API 34 emulator and runs the UI tests. | Every pull request and every push to `main` |
+| [Database migrations](../.github/workflows/database.yml) | **Check migrations (dry run)** on pull requests; **Apply migrations** to Supabase on `main` (Supabase CLI 3.0.0, `db push --remote`) | Pull requests and pushes that change `supabase/` or the workflow |
 
-Latest results on `main` (19 October 2026):
+Latest results on `main` (6 November 2026, version 1.1):
 
 | Workflow | Job | Result | Duration | Run |
 |---|---|---|---|---|
-| Android CI | Unit tests and build | ✅ success | 2 min 53 s | [#39236648804](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39236648804) |
-| Android CI | UI tests (emulator) | ✅ success | 5 min 3 s | [#39236648804](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39236648804) |
-| Database migrations | Apply migrations | ✅ success | – | [#39202745250](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/39202745250) |
+| Android CI | Unit tests and build | ✅ success | 4 min 0 s | [#42201290609](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/42201290609) |
+| Android CI | UI tests (emulator) | ✅ success | 3 min 21 s | [#42201290609](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/42201290609) |
+| Database migrations | Apply migrations (`20261106120000_delete_own_account.sql`) | ✅ success | – | [#42201290625](https://github.com/Rosebank-Project/iuafc-mobile/actions/runs/42201290625) |
 
-Over the project, Android CI ran 60 times (52 successful) and Database migrations 17 times (15 successful).
-The failed runs are the ones that caught problems before merging, for example a broken build in a pull
-request and an expired Supabase access token.
+Over the project, Android CI ran 76 times (64 successful) and Database migrations 23 times (18 successful).
+The failed runs are the ones that caught problems, for example a broken build in a pull request, an
+expired Supabase access token, and the Supabase CLI 3.0 change described in section 7.
+
+The screenshots below were taken on 19 October 2026 (version 1.0).
 
 Android CI runs (every pull request and every push to `main`):
 
@@ -202,6 +206,11 @@ Details are in pull requests #41–#44 and #46.
 | Gender "Other", donation type "Building Fund", attendance "Late" | Rejected by check constraints (the app doesn't know these values) | ✅ |
 | Deleting a member | Account kept, link cleared; donations kept | ✅ |
 | Signed out user calls `profile_directory()` | Permission denied | ✅ |
+| `delete_my_account()` called without signing in (`anon`) | Permission denied | ✅ |
+| The only Administrator deletes their account | Refused: "You are the only Administrator…" | ✅ |
+| Church Member deletes their account | Auth user and profile deleted; their announcement kept with no author | ✅ |
+| One of two Administrators deletes their account | Deleted; one Administrator left | ✅ |
+| `delete_my_account()` with no signed-in user | Refused: "You must be signed in…" | ✅ |
 | Seed migration run twice | No duplicates | ✅ |
 
 ## 7. Bugs found and fixed
@@ -224,6 +233,8 @@ Bugs found by the tests and code reviews above, all fixed before merging.
 | Ministry Leaders saw every member when capturing attendance | Review of #45 | Filtered by the leader's ministry |
 | New events could be scheduled in the past; created by "user-1" | Testing of #45 | Calendar blocks past days; signed-in user saved as creator |
 | Menu showed different initials from the header ("PJ" vs "PW") | Manual testing for this document | One `initialsOf()` for every avatar, with unit tests |
+| Migrations stopped being applied: Supabase CLI 3.0 pushes to a local database by default and asks for confirmation | Database workflow on #57 and on `main` | `db push --remote --yes` and the CLI version pinned to 3.0.0 (#57, #58) |
+| Website preview deployments failed | Vercel check on iuafc#3 | The Supabase variables were only set for Production in Vercel; the production build was not affected |
 
 ## 8. Testing on a real phone
 
@@ -233,8 +244,26 @@ accounts. Record any bug as a GitHub issue with the `bug` label.
 
 | Phone | Android version | Date | Tester | Result | Bugs (issues) |
 |---|---|---|---|---|---|
-| _phone model_ | _Android version_ | 2026-10-19 | Rolph | Pass – TC-01 to TC-50 passed (5 test accounts and Google sign-in) | None |
+| Samsung Galaxy A35 | Android 16 | 2026-10-19 | Rolph | Pass – TC-01 to TC-50 passed (5 test accounts and Google sign-in) | None |
 
 The APK installed and ran on the phone with the same results as on the emulator: every role saw only its
 own screens, data saved on the phone appeared on the website, and no crashes or new bugs were found, so
 no bug issues were opened.
+
+## 9. Version 1.1: account deletion, logging and the release build
+
+Tests of the changes made to prepare the app for the Google Play Store (#54–#58, iuafc#3).
+
+| ID | Feature | Steps | Expected | Actual | Result |
+|---|---|---|---|---|---|
+| TC-51 | Delete account – dialog (demo) | Settings → Delete account | Confirmation dialog explaining what is deleted and kept | Dialog shown with Cancel and Delete | ✅ Pass |
+| TC-52 | Delete account – confirm (demo) | Delete in the dialog | Signed out, back to the sign-in screen | Back to the role picker | ✅ Pass |
+| TC-53 | Delete account – database function deployed | Call `delete_my_account` through the API without signing in | Function exists and refuses | "permission denied for function delete_my_account" (401) | ✅ Pass |
+| TC-54 | Delete account page (website, signed out) | Open `/delete-account` | Explains what is deleted and kept; Sign in link returns to the page | As expected, also at phone width | ✅ Pass |
+| TC-55 | Privacy policy (website) | Open `/privacy` from the sign-in page footer | Policy shown | As expected, no console errors | ✅ Pass |
+| TC-56 | Delete a real account | Sign in with a throwaway account → Settings → Delete account → check Supabase → Authentication | Account and profile removed | _to be completed_ | |
+| TC-57 | Logging | Run the app and filter Logcat by `tag:IUAFC` | Start-up mode and session status logged | `IUAFC/AppContainer: Using Supabase`, `IUAFC/Session: Session status: …` | ✅ Pass |
+| TC-58 | Release build (R8) | Build the release APK, install and open it | App starts; debug logs removed | Starts with no crash; only the info log appears; all 21 serializers kept in `mapping.txt` | ✅ Pass |
+| TC-59 | Signed release APK and bundle | `apksigner verify` and `jarsigner -verify` | Signed with the release key | "Verifies" (APK Signature Scheme v2); "jar verified" (AAB) | ✅ Pass |
+| TC-60 | Google sign-in with the release APK | Install the release APK → Continue with Google | Signed in | _to be completed_ (release SHA-1 registered in Google Cloud) | |
+
