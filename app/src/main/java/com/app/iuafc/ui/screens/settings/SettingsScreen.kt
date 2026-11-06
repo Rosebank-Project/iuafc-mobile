@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.app.iuafc.BuildConfig
 import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.ThemePreference
@@ -614,7 +615,7 @@ fun SettingsScreen(
                             )
 
                             Text(
-                                text = "Version 1.0",
+                                text = "Version ${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

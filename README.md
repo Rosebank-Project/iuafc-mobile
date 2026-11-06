@@ -153,7 +153,7 @@ passwords are shared privately with the team.
 
 | Type | Where | How many |
 |---|---|---|
-| Unit tests (validation, ViewModels with fake repositories, navigation rules, sample data, dashboard) | `app/src/test` | 81 |
+| Unit tests (validation, ViewModels with fake repositories, navigation rules, sample data, dashboard, settings) | `app/src/test` | 84 |
 | UI tests (sign-in form, member form) | `app/src/androidTest` | 6 |
 
 ```bash
@@ -191,6 +191,26 @@ The full list of test cases, with the manual tests and their results, is in
 - In-app **Help** screen (Menu → Help, or Settings → Help & Support)
 
 ## Release notes
+
+### Version 1.1 – November 2026
+Prepares the app for publishing on the Google Play Store.
+
+**New**
+- **Delete account** – users can delete their own account in the app (Menu → Settings → Delete account)
+  or on the website ([iuafc.vercel.app/delete-account](https://iuafc.vercel.app/delete-account)). The
+  database refuses to delete the only Administrator. Google Play requires this for apps with accounts.
+- **Privacy policy** at [iuafc.vercel.app/privacy](https://iuafc.vercel.app/privacy): what is collected,
+  who can see it and how to delete it (written with POPIA in mind).
+- **Signed release build** – a release key (kept outside the repository), R8 code shrinking (the APK
+  went from 27 MB to 3.5 MB) and an app bundle (`.aab`) for the Play Store. See
+  [docs/release.md](docs/release.md).
+- **Logging** – every sign-in step, every database read and write, and every error shown to a user is
+  written to Logcat under the `IUAFC/` tag. Debug logs are removed from the release build.
+
+**Improvements**
+- Every Kotlin file is documented, with references to the official documentation.
+- GitHub Actions also builds the release bundle on every pull request, and the database workflow
+  pins the Supabase CLI version so a new CLI release can't break it.
 
 ### Version 1.0 – October 2026
 First complete version of the app, built from the Task 1 prototype and the existing website.
