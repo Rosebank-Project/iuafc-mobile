@@ -15,6 +15,7 @@ import com.app.iuafc.data.model.PaymentMethod
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.SaveResult
+import com.app.iuafc.util.AppLog
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import kotlinx.coroutines.CancellationException
@@ -199,6 +200,7 @@ internal suspend fun saveCatching(block: suspend () -> Unit): SaveResult = try {
 } catch (e: CancellationException) {
     throw e
 } catch (e: Exception) {
+    AppLog.e("Data", "Save failed", e)
     SaveResult.Error(friendlyDataMessage(e))
 }
 

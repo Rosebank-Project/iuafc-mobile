@@ -9,6 +9,7 @@ import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.DashboardData
 import com.app.iuafc.data.repository.DashboardRepository
 import com.app.iuafc.ui.common.UiState
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +44,7 @@ class DashboardViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "load failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to load dashboard.",
                 )
@@ -61,3 +63,5 @@ class DashboardViewModel(
         }
     }
 }
+
+private const val TAG = "Dashboard"

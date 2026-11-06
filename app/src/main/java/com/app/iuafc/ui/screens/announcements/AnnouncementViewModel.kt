@@ -10,6 +10,7 @@ import com.app.iuafc.data.model.Announcement
 import com.app.iuafc.data.repository.AnnouncementRepository
 import com.app.iuafc.data.repository.UserRepository
 import com.app.iuafc.ui.common.UiState
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +49,7 @@ class AnnouncementViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "loadAnnouncements failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to load announcements.",
                 )
@@ -66,7 +68,8 @@ class AnnouncementViewModel(
                     }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "loadAuthors failed", e)
                 // The screen can still display the signed-in user's name.
                 // Unknown authors will use the "Church office" fallback.
             }
@@ -89,6 +92,7 @@ class AnnouncementViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "createAnnouncement failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to create announcement.",
                 )
@@ -104,6 +108,7 @@ class AnnouncementViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "updateAnnouncement failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to update announcement.",
                 )
@@ -119,6 +124,7 @@ class AnnouncementViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "deleteAnnouncement failed", e)
                 _uiState.value = UiState.Error(
                     e.message ?: "Unable to delete announcement.",
                 )
@@ -152,3 +158,5 @@ class AnnouncementViewModel(
         fun factory() = Factory
     }
 }
+
+private const val TAG = "Announcement"

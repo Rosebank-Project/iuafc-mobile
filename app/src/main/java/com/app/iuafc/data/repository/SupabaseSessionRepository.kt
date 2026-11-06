@@ -2,6 +2,7 @@ package com.app.iuafc.data.repository
 
 import com.app.iuafc.data.model.Role
 import com.app.iuafc.data.model.UserProfile
+import com.app.iuafc.util.AppLog
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.exception.AuthErrorCode
@@ -46,6 +47,7 @@ class SupabaseSessionRepository(
     init {
         scope.launch {
             supabase.auth.sessionStatus.collect { status ->
+                AppLog.d(TAG, "Session status: ${status::class.simpleName}")
                 _state.value = when (status) {
                     is SessionStatus.Authenticated ->
                         (
@@ -66,8 +68,12 @@ class SupabaseSessionRepository(
                     is SessionStatus.RefreshFailure ->
                         supabase.auth.currentUserOrNull()
                             ?.let {
+                                AppLog.w(TAG, "Token refresh failed, keeping the local session")
                                 SessionState.SignedIn(loadProfile(it))
                             } ?: SessionState.SignedOut
+                }
+                (_state.value as? SessionState.SignedIn)?.let {
+                    AppLog.i(TAG, "Signed in as ${it.user.role.displayName}")
                 }
             }
         }
@@ -96,7 +102,8 @@ class SupabaseSessionRepository(
     override suspend fun signIn(
         email: String,
         password: String,
-    ): AuthResult = attempt(AuthResult::Error) {
+    ): AuthResult = attempt("Email sign-in", AuthResult::Error) {
+        AppLog.d(TAG, "Signing in with email and password")
         supabase.auth.signInWith(Email) {
             this.email = email.trim()
             this.password = password
@@ -109,7 +116,8 @@ class SupabaseSessionRepository(
         fullName: String,
         email: String,
         password: String,
-    ): SignUpResult = attempt(SignUpResult::Error) {
+    ): SignUpResult = attempt("Registration", SignUpResult::Error) {
+        AppLog.d(TAG, "Registering a new account")
         supabase.auth.signUpWith(Email) {
             this.email = email.trim()
             this.password = password
@@ -121,8 +129,10 @@ class SupabaseSessionRepository(
 
         // With email confirmation enabled, there may be no session yet.
         if (supabase.auth.currentSessionOrNull() != null) {
+            AppLog.i(TAG, "Account created and signed in")
             SignUpResult.SignedIn
         } else {
+            AppLog.i(TAG, "Account created, waiting for email confirmation")
             SignUpResult.ConfirmEmail
         }
     }
@@ -130,7 +140,8 @@ class SupabaseSessionRepository(
     override suspend fun signInWithGoogle(
         idToken: String,
         rawNonce: String,
-    ): AuthResult = attempt(AuthResult::Error) {
+    ): AuthResult = attempt("Google sign-in", AuthResult::Error) {
+        AppLog.d(TAG, "Sending the Google ID token to Supabase")
         // Supabase validates the Google token and creates the user
         // on the first successful sign-in.
         supabase.auth.signInWith(IDToken) {
@@ -144,8 +155,9 @@ class SupabaseSessionRepository(
 
     override suspend fun sendPasswordReset(
         email: String,
-    ): AuthResult = attempt(AuthResult::Error) {
+    ): AuthResult = attempt("Password reset", AuthResult::Error) {
         supabase.auth.resetPasswordForEmail(email.trim())
+        AppLog.i(TAG, "Password reset email requested")
 
         AuthResult.Success
     }
@@ -153,10 +165,12 @@ class SupabaseSessionRepository(
     override suspend fun signOut() {
         try {
             supabase.auth.signOut()
+            AppLog.i(TAG, "Signed out")
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             // Offline: the local session is cleared anyway.
+            AppLog.w(TAG, "Sign-out request failed, local session cleared", e)
         }
     }
 
@@ -191,7 +205,8 @@ class SupabaseSessionRepository(
                 ?: fallback
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AppLog.w(TAG, "Could not read the profile, using Church Member", e)
             fallback
         }
     }
@@ -201,6 +216,7 @@ class SupabaseSessionRepository(
      * messages the user can understand.
      */
     private inline fun <R> attempt(
+        action: String,
         onError: (String) -> R,
         block: () -> R,
     ): R =
@@ -209,10 +225,12 @@ class SupabaseSessionRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            AppLog.w(TAG, "$action failed", e)
             onError(friendlyMessage(e))
         }
 
     private companion object {
+        const val TAG = "Session"
 
         fun friendlyMessage(
             e: Exception,

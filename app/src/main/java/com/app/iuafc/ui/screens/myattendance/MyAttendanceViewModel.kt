@@ -9,6 +9,7 @@ import com.app.iuafc.data.model.Attendance
 import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.AttendanceRepository
 import com.app.iuafc.data.repository.EventRepository
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,7 @@ class MyAttendanceViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "loadMyAttendance failed", e)
                 _errorMessage.value = "Could not load your attendance. Please try again."
             } finally {
                 _isLoading.value = false
@@ -78,3 +80,5 @@ class MyAttendanceViewModel(
         }
     }
 }
+
+private const val TAG = "MyAttendance"

@@ -8,6 +8,7 @@ import com.app.iuafc.appContainer
 import com.app.iuafc.data.model.Member
 import com.app.iuafc.data.model.Ministry
 import com.app.iuafc.data.repository.MemberRepository
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -79,7 +80,8 @@ class MembersViewModel(private val repository: MemberRepository) : ViewModel() {
                 _uiState.update { it.copy(isLoading = false, members = members, ministries = ministries) }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "load failed", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Could not load members. Please try again.") }
             }
         }
@@ -97,3 +99,5 @@ class MembersViewModel(private val repository: MemberRepository) : ViewModel() {
         }
     }
 }
+
+private const val TAG = "Members"

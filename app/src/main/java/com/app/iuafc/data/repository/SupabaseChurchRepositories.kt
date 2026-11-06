@@ -18,6 +18,7 @@ import com.app.iuafc.data.remote.NoPermissionException
 import com.app.iuafc.data.remote.RegistrationRow
 import com.app.iuafc.data.remote.orNullIfBlank
 import com.app.iuafc.data.remote.saveCatching
+import com.app.iuafc.util.AppLog
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
@@ -44,6 +45,7 @@ class SupabaseMemberRepository(private val supabase: SupabaseClient) : MemberRep
     override suspend fun getMembers(): List<Member> =
         supabase.from("members").select { order("full_name", Order.ASCENDING) }
             .decodeList<MemberRow>().map { it.toMember() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} members") }
 
     override suspend fun getMember(id: String): Member? =
         supabase.from("members").select { filter { eq("id", id) } }
@@ -52,6 +54,7 @@ class SupabaseMemberRepository(private val supabase: SupabaseClient) : MemberRep
     override suspend fun getMinistries(): List<Ministry> =
         supabase.from("ministries").select { order("name", Order.ASCENDING) }
             .decodeList<MinistryRow>().map { it.toMinistry() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} ministries") }
 
     override suspend fun saveMember(member: Member): SaveResult = saveMemberRow(member).let { result ->
         // members.email is unique in the database
@@ -73,6 +76,7 @@ class SupabaseMemberRepository(private val supabase: SupabaseClient) : MemberRep
             put("ministry_id", member.ministryId.orNullIfBlank())
             put("join_date", member.joinDate)
         }
+        AppLog.d(TAG, if (member.id.isBlank()) "Adding a member" else "Updating member ${member.id}")
         if (member.id.isBlank()) {
             supabase.from("members").insert(row)
         } else {
@@ -89,6 +93,7 @@ class SupabaseChurchFeaturesRepository(private val supabase: SupabaseClient) : C
     override suspend fun getMinistries(): List<Ministry> =
         supabase.from("ministries").select { order("name", Order.ASCENDING) }
             .decodeList<MinistryRow>().map { it.toMinistry() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} ministries") }
 
     override suspend fun saveMinistry(ministry: Ministry): SaveResult = saveCatching {
         val row = buildJsonObject {
@@ -96,6 +101,7 @@ class SupabaseChurchFeaturesRepository(private val supabase: SupabaseClient) : C
             put("description", ministry.description.trim())
             put("leader_id", ministry.leaderId.orNullIfBlank())
         }
+        AppLog.d(TAG, if (ministry.id.isBlank()) "Adding a ministry" else "Updating ministry ${ministry.id}")
         if (ministry.id.isBlank()) {
             supabase.from("ministries").insert(row)
         } else {
@@ -106,9 +112,11 @@ class SupabaseChurchFeaturesRepository(private val supabase: SupabaseClient) : C
     override suspend fun getActivities(): List<MinistryActivity> =
         supabase.from("ministry_activities").select { order("proposed_date", Order.ASCENDING) }
             .decodeList<ActivityRow>().map { it.toActivity() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} ministry activities") }
 
     /** A Ministry Leader proposes an activity; it always starts as Pending. */
     override suspend fun saveActivity(activity: MinistryActivity): SaveResult = saveCatching {
+        AppLog.d(TAG, "Proposing an activity for ministry ${activity.ministryId}")
         supabase.from("ministry_activities").insert(
             buildJsonObject {
                 put("ministry_id", activity.ministryId)
@@ -124,6 +132,7 @@ class SupabaseChurchFeaturesRepository(private val supabase: SupabaseClient) : C
 
     /** An Administrator or Pastor approves or rejects an activity. */
     override suspend fun reviewActivity(activity: MinistryActivity): SaveResult = saveCatching {
+        AppLog.d(TAG, "Activity ${activity.id} reviewed: ${activity.status.name}")
         supabase.updateById(
             "ministry_activities",
             activity.id,
@@ -139,9 +148,11 @@ class SupabaseChurchFeaturesRepository(private val supabase: SupabaseClient) : C
     override suspend fun getDonations(): List<Donation> =
         supabase.from("donations").select { order("donation_date", Order.DESCENDING) }
             .decodeList<DonationRow>().map { it.toDonation() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} donations") }
 
     /** The database assigns the receipt number (RCP-1001, RCP-1002, …). */
     override suspend fun saveDonation(donation: Donation): SaveResult = saveCatching {
+        AppLog.d(TAG, "Recording a ${donation.donationType.name} donation")
         supabase.from("donations").insert(
             buildJsonObject {
                 put("member_id", donation.memberId)
@@ -161,18 +172,22 @@ class SupabaseEventRepository(private val supabase: SupabaseClient) : EventRepos
     override suspend fun getEvents(): List<Event> =
         supabase.from("events").select { order("event_date", Order.ASCENDING) }
             .decodeList<EventRow>().map { it.toEvent() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} events") }
 
     override suspend fun createEvent(event: Event) {
+        AppLog.d(TAG, "Creating an event on ${event.date}")
         supabase.from("events").insert(eventRow(event))
     }
 
     override suspend fun updateEvent(event: Event) {
+        AppLog.d(TAG, "Updating event ${event.id}")
         supabase.updateById("events", event.id, eventRow(event))
     }
 
     override suspend fun deleteEvent(eventId: String) = supabase.deleteById("events", eventId)
 
     override suspend fun registerForEvent(eventId: String, memberId: String) {
+        AppLog.d(TAG, "Registering for event $eventId")
         supabase.from("event_registrations").upsert(
             buildJsonObject {
                 put("event_id", eventId)
@@ -185,6 +200,7 @@ class SupabaseEventRepository(private val supabase: SupabaseClient) : EventRepos
     }
 
     override suspend fun unregisterFromEvent(eventId: String, memberId: String) {
+        AppLog.d(TAG, "Unregistering from event $eventId")
         supabase.from("event_registrations").delete {
             filter {
                 eq("event_id", eventId)
@@ -196,6 +212,7 @@ class SupabaseEventRepository(private val supabase: SupabaseClient) : EventRepos
     override suspend fun getRegisteredEventIds(memberId: String): List<String> =
         supabase.from("event_registrations").select { filter { eq("member_id", memberId) } }
             .decodeList<RegistrationRow>().map { it.eventId }
+            .also { AppLog.d(TAG, "Loaded ${it.size} event registrations") }
 
     private fun eventRow(event: Event) = buildJsonObject {
         put("name", event.name.trim())
@@ -212,17 +229,21 @@ class SupabaseAttendanceRepository(private val supabase: SupabaseClient) : Atten
 
     override suspend fun getAttendance(): List<Attendance> =
         supabase.from("attendance").select().decodeList<AttendanceRow>().map { it.toAttendance() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} attendance records") }
 
     override suspend fun getAttendanceForEvent(eventId: String): List<Attendance> =
         supabase.from("attendance").select { filter { eq("event_id", eventId) } }
             .decodeList<AttendanceRow>().map { it.toAttendance() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} attendance records") }
 
     override suspend fun getAttendanceForMember(memberId: String): List<Attendance> =
         supabase.from("attendance").select { filter { eq("member_id", memberId) } }
             .decodeList<AttendanceRow>().map { it.toAttendance() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} attendance records") }
 
     override suspend fun saveAttendance(records: List<Attendance>) {
         if (records.isEmpty()) return
+        AppLog.d(TAG, "Saving attendance for ${records.size} members")
         val rows = buildJsonArray {
             records.forEach { a ->
                 add(
@@ -246,9 +267,11 @@ class SupabaseAnnouncementRepository(private val supabase: SupabaseClient) : Ann
     override suspend fun getAnnouncements(): List<Announcement> =
         supabase.from("announcements").select { order("publish_date", Order.DESCENDING) }
             .decodeList<AnnouncementRow>().map { it.toAnnouncement() }
+            .also { AppLog.d(TAG, "Loaded ${it.size} announcements") }
 
-    override suspend fun createAnnouncement(title: String, message: String, createdBy: String): Announcement =
-        supabase.from("announcements").insert(
+    override suspend fun createAnnouncement(title: String, message: String, createdBy: String): Announcement {
+        AppLog.d(TAG, "Posting an announcement")
+        return supabase.from("announcements").insert(
             buildJsonObject {
                 put("title", title.trim())
                 put("message", message.trim())
@@ -256,8 +279,10 @@ class SupabaseAnnouncementRepository(private val supabase: SupabaseClient) : Ann
                 put("created_by", createdBy.orNullIfBlank())
             },
         ) { select() }.decodeSingle<AnnouncementRow>().toAnnouncement()
+    }
 
     override suspend fun updateAnnouncement(announcement: Announcement) {
+        AppLog.d(TAG, "Updating announcement ${announcement.id}")
         supabase.updateById(
             "announcements",
             announcement.id,
@@ -280,13 +305,22 @@ internal suspend fun SupabaseClient.updateById(table: String, id: String, row: J
         select()
         filter { eq("id", id) }
     }.decodeList<JsonObject>()
-    if (changed.isEmpty()) throw NoPermissionException()
+    if (changed.isEmpty()) {
+        AppLog.w(TAG, "Update of $table/$id changed nothing (hidden by Row Level Security)")
+        throw NoPermissionException()
+    }
 }
 
 internal suspend fun SupabaseClient.deleteById(table: String, id: String) {
+    AppLog.d(TAG, "Deleting $table/$id")
     val deleted = from(table).delete {
         select()
         filter { eq("id", id) }
     }.decodeList<JsonObject>()
-    if (deleted.isEmpty()) throw NoPermissionException()
+    if (deleted.isEmpty()) {
+        AppLog.w(TAG, "Delete of $table/$id changed nothing (hidden by Row Level Security)")
+        throw NoPermissionException()
+    }
 }
+
+private const val TAG = "Data"

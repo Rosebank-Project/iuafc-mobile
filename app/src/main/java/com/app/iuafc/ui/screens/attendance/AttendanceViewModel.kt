@@ -14,6 +14,7 @@ import com.app.iuafc.data.model.UserProfile
 import com.app.iuafc.data.repository.AttendanceRepository
 import com.app.iuafc.data.repository.EventRepository
 import com.app.iuafc.data.repository.MemberRepository
+import com.app.iuafc.util.AppLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +66,7 @@ class AttendanceViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "loadInitialData failed", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to load data.") }
             }
         }
@@ -93,6 +95,7 @@ class AttendanceViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "selectEvent failed", e)
                 _uiState.update { it.copy(errorMessage = "Failed to load attendance records.") }
             }
         }
@@ -132,6 +135,7 @@ class AttendanceViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                AppLog.e(TAG, "saveAttendance failed", e)
                 _uiState.update { it.copy(isSaving = false, errorMessage = "Failed to save attendance.") }
             }
         }
@@ -150,3 +154,5 @@ class AttendanceViewModel(
         }
     }
 }
+
+private const val TAG = "Attendance"

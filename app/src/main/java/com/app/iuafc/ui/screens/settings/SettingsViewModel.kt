@@ -11,6 +11,7 @@ import com.app.iuafc.data.repository.SessionRepository
 import com.app.iuafc.data.repository.SettingsRepository
 import com.app.iuafc.data.repository.ThemePreference
 import com.app.iuafc.data.repository.UserRepository
+import com.app.iuafc.util.AppLog
 import com.app.iuafc.util.Validators
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,7 +79,8 @@ class SettingsViewModel(
                 )
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "loadProfile failed", e)
                 _profileMessage.value =
                     "We couldn't load your profile. Please try again."
             } finally {
@@ -96,7 +98,8 @@ class SettingsViewModel(
                     settingsRepository.getThemePreference()
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "loadThemePreference failed", e)
                 _profileMessage.value =
                     "We couldn't load your theme preference."
             } finally {
@@ -116,7 +119,8 @@ class SettingsViewModel(
                 _themePreference.value = preference
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "updateThemePreference failed", e)
                 _profileMessage.value =
                     "We couldn't change the theme. Please try again."
             } finally {
@@ -210,7 +214,8 @@ class SettingsViewModel(
                 _profileSaveSucceeded.value = true
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "updateProfile failed", e)
                 _profileMessage.value =
                     "We couldn't save your changes. Check your connection and try again."
             } finally {
@@ -244,7 +249,8 @@ class SettingsViewModel(
                 settingsRepository.setNotificationsEnabled(enabled)
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "setNotificationsEnabled failed", e)
                 _profileMessage.value =
                     "We couldn't update notifications. Please try again."
             }
@@ -282,7 +288,8 @@ class SettingsViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "sendPasswordReset failed", e)
                 _passwordResetMessage.value =
                     "We couldn't send the reset email. Please try again."
             }
@@ -299,7 +306,8 @@ class SettingsViewModel(
                 sessionRepository.signOut()
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AppLog.e(TAG, "signOut failed", e)
                 _profileMessage.value =
                     "We couldn't sign you out. Please try again."
             }
@@ -336,3 +344,5 @@ class SettingsViewModel(
             }
     }
 }
+
+private const val TAG = "Settings"
