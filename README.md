@@ -23,6 +23,7 @@ Built by **ALAVUMIRO TECH CONSULTANTS** for XISD6329 (Work Integrated Learning),
 </p>
 
 ## Contents
+- [Try the app](#try-the-app)
 - [Purpose](#purpose)
 - [Features](#features)
 - [Screenshots](#screenshots)
@@ -34,6 +35,21 @@ Built by **ALAVUMIRO TECH CONSULTANTS** for XISD6329 (Work Integrated Learning),
 - [Documentation](#documentation)
 - [Release notes](#release-notes)
 - [Team](#team)
+
+## Try the app
+
+No build needed:
+
+| What | Where |
+|---|---|
+| **Android app** (signed, version 1.1) | Download **IUAFC-1.1.apk** from the [latest release](https://github.com/Rosebank-Project/iuafc-mobile/releases/latest) on an Android phone (8.0 or later) and open it |
+| **Website** (same database) | [iuafc.vercel.app](https://iuafc.vercel.app) |
+| **Automated tests** | [GitHub Actions](https://github.com/Rosebank-Project/iuafc-mobile/actions) – open a run and choose *Re-run all jobs* to run them again |
+| **Database** (tables, keys, security rules) | [supabase/migrations](supabase/migrations) and [docs/database.md](docs/database.md) |
+
+Anyone can register in the app or sign in with Google; new accounts are Church Members. A reviewer
+account with the Administrator role, which opens every screen, is given in the submitted report (its
+password is never stored in this repository).
 
 ## Purpose
 
