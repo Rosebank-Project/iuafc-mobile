@@ -44,7 +44,7 @@ No build needed:
 |---|---|
 | **Android app** (signed, version 1.1) | Download **IUAFC-1.1.apk** from the [latest release](https://github.com/Rosebank-Project/iuafc-mobile/releases/latest) on an Android phone (8.0 or later) and open it |
 | **Website** (same database) | [iuafc.vercel.app](https://iuafc.vercel.app) |
-| **Automated tests** | [GitHub Actions](https://github.com/Rosebank-Project/iuafc-mobile/actions) – open a run and choose *Re-run all jobs* to run them again |
+| **Automated tests** | [GitHub Actions](https://github.com/Rosebank-Project/iuafc-mobile/actions) – every run with its logs, test reports and the APK it built (or run `./gradlew testDebugUnitTest` after cloning) |
 | **Database** (tables, keys, security rules) | [supabase/migrations](supabase/migrations) and [docs/database.md](docs/database.md) |
 
 Anyone can register in the app or sign in with Google; new accounts are Church Members. A reviewer
